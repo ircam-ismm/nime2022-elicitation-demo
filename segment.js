@@ -38,7 +38,6 @@ function new_segment() {
     outlet(0, segment.join(" "));
 }
 
-
 function new_stroke() {
 // new touch detected
     stroke = [];

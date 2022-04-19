@@ -1,5 +1,5 @@
 autowatch = true;
-outlets = 2;
+outlets = 3;
 
 // receives "raw" input from sensel
 // adds a timestamp
@@ -34,6 +34,9 @@ function state_change() {
 function new_sample() {
     var data = arrayfromargs(arguments);
     xyp = data.slice(-3);
+
+    // logging to python
+    outlet(2, new_stroke, data);
 
     // store the touchdown and send relative position thereafter
     if (new_stroke) {
