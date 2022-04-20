@@ -1,9 +1,12 @@
 const Max = require('max-api');
 
+const { performance } = require('perf_hooks');
+
 // package imports
 var Fili = require('fili');
 var SG = require('ml-savitzky-golay').default;
-var DTW = require("dynamic-time-warping")
+var DTW = require("dynamic-time-warping");
+var nj = require("numjs");
 
 // local imports
 var debug = require('./debug.js');
@@ -22,7 +25,10 @@ var first_point = [];
 Max.addHandler("new_sample", async (...sample) => {
     // Max.post("new_sample: ", sample);
 
-    timestamp = sample[0];
+    var timestamp = parseInt(sample[0]);
+    // timstamp = timestamp.toFixed();
+    // Max.post("timstamp", timestamp);
+
     xyp = sample.slice(-3);
 
     // LOGGING
@@ -44,9 +50,9 @@ Max.addHandler("new_sample", async (...sample) => {
         var rel_xyp_lp = lowpass(rel_xyp);
 
         // send to pipo
-
+        rel_xyp_lp = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
         var res = [timestamp].concat(rel_xyp_lp)
-        var res = res.map(function (num, idx) {return num.toFixed(20)});
+        // var res = res.map(function (num, idx) {return num.toFixed(20)});
         // Max.post(timestamp, rel_xyp_lp);
         var res = await Max.outlet("lowpass", res.join(" "));
 
@@ -136,6 +142,9 @@ var stroke = [];
 var speeds = [];
 var SPEED_THRESHOLD = 1.0;
 Max.addHandler("segment", async (...sample) => {
+    // Max.post("segment", sample); //, timestamp, xyp, to_log);
+
+    // sample = sample.split(" ");
     // Max.post("segment: ", sample);
     var timestamp = sample[0];
     var xyp = sample.slice(-3);
@@ -154,7 +163,7 @@ Max.addHandler("segment", async (...sample) => {
     speed = 10000 * speed;
     speeds.push(speed);
 
-    Max.post("speed:", speed);
+    // Max.post("speed:", speed);
 
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
@@ -163,7 +172,7 @@ Max.addHandler("segment", async (...sample) => {
 
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
-            Max.post("min: ", stroke.length, last_3[0], last_3[1], last_3[2]);
+            // Max.post("min: ", stroke.length, last_3[0], last_3[1], last_3[2]);
             if ((last_3[1] < SPEED_THRESHOLD) || (stroke.length > 50)) {
                 new_segment();
             }
@@ -219,58 +228,53 @@ async function compute_features(segment) {
     // segment = segment.map(x => JSON.parse("[" + x + "]"));
 
     if (segment.length > 10) {
-        speed = segment.map(x => Math.pow(x[0], 2) + Math.pow(x[1], 2));
-        angle = segment.map(x => Math.atan2(x[1], x[0]));
+        var speed = segment.map(x => Math.pow(x[0], 2) + Math.pow(x[1], 2));
+        var angle = segment.map(x => Math.atan2(x[1], x[0]));
         var dA = SG(angle, 1, options);
 
-        // Max.post(angle);
-        // Max.post(dA); // first derivative
-        Max.post(speed.length, angle.length);
+        // concat
+        var features = speed.map(function(num, idx) {return [num, dA[idx]]})
+
+        var startTime = performance.now();
+        var res = compute_distance(features);
+        var endTime = performance.now();
+
+        Max.post("DTW", res, endTime - startTime);
     }
 }
 
 
 
+var distance_p1_2d = function (a, b) {
+    var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
+    var sum = diff.reduce((a, b) => a + b, 0);
+    return sum
+}
 
 
-// Max.addHandler("lowpass", async (...sample) => {
-//     // debug_print("lowpass", sample);
-//     var filtered = [];
-//     for (var i=0; i<NDIMS; i++) {
-//         filtered[i] = iirFilters[i].singleStep(sample[i])
-//     }
-//     // var res = await Max.outlet("lowpass", JSON.stringify(filtered));
-//     filtered = filtered.map(function (num, idx) {return num.toFixed(9)});
-//     // var res = await Max.outlet("lowpass", filtered.join(" "));
-// });
+var models = {};
 
+function compute_distance(A) {
+    n_models = Object.keys(models).length;
+    if (n_models == 0) {
+        models[0] = A;
+    }
+    else {
+        var min_key = 0;
+        var min_dist = 10000;
+        for (key in models) {
+            var B = models[key];
+            var cur_dist = new DTW(A, B, distance_p1_2d);
+            var dist = cur_dist.getDistance();
 
-// Max.addHandler("new_stroke", async (unused) => {
-//     Max.post("node = : new_stroke");
-//     // reset filters
-//     for (var i=0; i<NDIMS; i++) {
-//         iirFilters[i].reinit();
-//     }
-// });
+            if (dist < min_dist) {
+                min_key = key;
+                min_dist = dist;
+            }
+            // store model
+            models[n_models] = A;
+        }
+    }
+    return [min_key, min_dist]
+}
 
-// Max.addHandler("end_stroke", async (unused) => {
-// });
-
-
-// Max.addHandler("stroke", async (unused) => {
-
-// });
-
-// // var dtw = new DTW(A, B, fun);
-// // var dist = dtw.getDistance();
-// // console.log(dist);
-
-// var fun = function (a, b) {
-//     var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
-//     var sum = diff.reduce((a, b) => a + b, 0);
-//     return sum
-// }
-
-// function unravel(X) {
-//     return X;
-// }

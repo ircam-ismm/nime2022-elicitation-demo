@@ -15,12 +15,13 @@ Max.addHandler("play_one", async (...sample) => {
     // get random stroke from dataset
     const keys = Object.keys(parsed);
     const random_key = keys[getRandomInt(keys.length)];
-    var i = random_key;
+    Max.post("Unistroke read: ", random_key);
 
     var res = await Max.outlet("state", 1);
 
     // loop over data
     var firstpoint = true;
+    var i = random_key;
     for (j in parsed[i]) {
         var data = parsed[i][j];
         // position data
@@ -51,11 +52,10 @@ Max.addHandler("play_one", async (...sample) => {
 });
 
 var parsed = new Object();
-
 Max.addHandler("read", async (filename) => {
     let str = fs.readFileSync(filename,'utf8');
     parsed = JSON.parse(str);
-    Max.post(filename, str, parsed);
+    // Max.post(filename, str, parsed);
 });
 
 //for testing - shows all the current objects in Max window
