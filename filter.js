@@ -8,8 +8,9 @@ var DTW = require("dynamic-time-warping")
 // local imports
 var debug = require('./debug.js');
 
-
-
+var LOGGING = true;
+var to_log = {};
+var N_STROKE = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // 1. handle state, relative position
@@ -21,10 +22,16 @@ var first_point = [];
 Max.addHandler("new_sample", async (...sample) => {
     // Max.post("new_sample: ", sample);
 
+    timestamp = sample[0];
     xyp = sample.slice(-3);
 
+    // LOGGING
+    if (LOGGING) {
+        to_log[timestamp] = {'xyp': xyp, 'new_stroke': new_stroke};
+    }
+
     if (new_stroke) {
-        Max.post("store touchdown", xyp);
+        Max.post("stroke touchdown", xyp);
         first_point = xyp;
         first_point[2] = 0; // initial pressure is always 0
         new_stroke = false;
@@ -35,7 +42,19 @@ Max.addHandler("new_sample", async (...sample) => {
     if (finger == 1) {
         var rel_xyp = xyp.map(function (num, idx) { return num-first_point[idx] });
         var rel_xyp_lp = lowpass(rel_xyp);
-        var res = await Max.outlet("lowpass", rel_xyp_lp.join(" "));
+
+        // send to pipo
+
+        var res = [timestamp].concat(rel_xyp_lp)
+        var res = res.map(function (num, idx) {return num.toFixed(20)});
+        // Max.post(timestamp, rel_xyp_lp);
+        var res = await Max.outlet("lowpass", res.join(" "));
+
+        // LOGGING
+        if (LOGGING) {
+            var obj = to_log[timestamp]
+            obj['xyp_lp'] = rel_xyp_lp;
+        }
     }
 
 });
@@ -103,7 +122,6 @@ function lowpass(sample) {
         filtered[i] = iirFilters[i].singleStep(sample[i])
     }
     // var res = await Max.outlet("lowpass", JSON.stringify(filtered));
-    filtered = filtered.map(function (num, idx) {return num.toFixed(9)});
     return filtered
 }
 
@@ -119,20 +137,33 @@ var speeds = [];
 var SPEED_THRESHOLD = 1.0;
 Max.addHandler("segment", async (...sample) => {
     // Max.post("segment: ", sample);
-    stroke.push(sample);
-    var speed = Math.pow(sample[0], 2) + Math.pow(sample[1], 2);
+    var timestamp = sample[0];
+    var xyp = sample.slice(-3);
+
+    if (LOGGING) {
+        var obj = to_log[timestamp];
+        obj['xyp_sg'] = xyp;
+        obj['timestamp'] = timestamp;
+        obj['n_stroke'] = N_STROKE;
+        var res = await Max.outlet("logging", JSON.stringify(obj));
+    }
+
+    stroke.push(xyp);
+
+    var speed = Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2);
     speed = 10000 * speed;
     speeds.push(speed);
 
-    Max.post("speed:", speed, "\n");
+    Max.post("speed:", speed);
 
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
         var last_3 = speeds.slice(-3);
+        // Max.post("last_3:", last_3, last_3[0] > last_3[1], last_3[2] > last_3[1]);
 
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
-            Max.post("min: ", stroke.length, last_3[0], last_3[1], last_3[2], "\n");
+            Max.post("min: ", stroke.length, last_3[0], last_3[1], last_3[2]);
             if ((last_3[1] < SPEED_THRESHOLD) || (stroke.length > 50)) {
                 new_segment();
             }
@@ -141,11 +172,19 @@ Max.addHandler("segment", async (...sample) => {
 
 });
 
-function new_segment() {
+async function new_segment() {
 // individual segment within a stroke
-    Max.post("SEGMENT:", stroke.length);
+    N_STROKE += 1;
+
+    Max.post("SEGMENT:", N_STROKE, stroke.length);
     segment = stroke.splice(0, stroke.length-1);
     compute_features(segment);
+    // if (LOGGING) {
+    //     to_log['N_STROKE'] = N_STROKE;
+    //     var res = await Max.outlet("logging", JSON.stringify(to_log));
+    //     Max.post("SEND RES !!!", res);
+    // }
+    // to_log = {};
 }
 
 function erase_last_stroke() {

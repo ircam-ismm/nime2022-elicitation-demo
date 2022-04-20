@@ -286,7 +286,7 @@
 													"numoutlets" : 1,
 													"outlettype" : [ "" ],
 													"patching_rect" : [ 161.0, 197.0, 200.0, 22.0 ],
-													"text" : "1 1 0.484204 0.542755 0.018636 255 0 10"
+													"text" : "1 1 0.958111 0.024567 0.019205 255 0 10"
 												}
 
 											}
@@ -856,7 +856,7 @@
 													"numoutlets" : 1,
 													"outlettype" : [ "" ],
 													"patching_rect" : [ 185.0, 440.399993999999992, 220.0, 22.0 ],
-													"text" : "1 1 0.484204 0.457245 0.018636"
+													"text" : "1 1 0.958111 0.975433 0.019205"
 												}
 
 											}
@@ -3374,7 +3374,17 @@
 				"type" : "iLaX"
 			}
  ],
-		"autosave" : 0
+		"autosave" : 0,
+		"styles" : [ 			{
+				"name" : "tap",
+				"default" : 				{
+					"fontname" : [ "Lato Light" ]
+				}
+,
+				"parentstyle" : "",
+				"multi" : 0
+			}
+ ]
 	}
 
 }

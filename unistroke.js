@@ -17,6 +17,8 @@ Max.addHandler("play_one", async (...sample) => {
     const random_key = keys[getRandomInt(keys.length)];
     var i = random_key;
 
+    var res = await Max.outlet("state", 1);
+
     // loop over data
     var firstpoint = true;
     for (j in parsed[i]) {
@@ -39,8 +41,13 @@ Max.addHandler("play_one", async (...sample) => {
             t0 = t;
             await delay(delta);
         }
+
+        // add timstamp
+        to_print.unshift(t);
+
         var res = await Max.outlet("draw", to_print.join(" "));
     }
+    var res = await Max.outlet("state", 0);
 });
 
 var parsed = new Object();
