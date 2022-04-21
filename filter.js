@@ -154,10 +154,10 @@ Max.addHandler("segment", async (...sample) => {
         obj['xyp_sg'] = xyp;
         obj['timestamp'] = timestamp;
         obj['n_stroke'] = N_STROKE;
-        var res = await Max.outlet("logging", JSON.stringify(obj));
+        var res = await Max.outlet("logging_data", JSON.stringify(obj));
     }
 
-    stroke.push(xyp);
+    stroke.push(sample);
 
     var speed = Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2);
     speed = 10000 * speed;
@@ -188,12 +188,6 @@ async function new_segment() {
     Max.post("SEGMENT:", N_STROKE, stroke.length);
     segment = stroke.splice(0, stroke.length-1);
     compute_features(segment);
-    // if (LOGGING) {
-    //     to_log['N_STROKE'] = N_STROKE;
-    //     var res = await Max.outlet("logging", JSON.stringify(to_log));
-    //     Max.post("SEND RES !!!", res);
-    // }
-    // to_log = {};
 }
 
 function erase_last_stroke() {
@@ -217,19 +211,14 @@ var options = {
     pad: 'post',
     padValue: 'replicate',
 };
-// compute features
-// python code is:
-// sample['s'] = np.linalg.norm(sample[['x1', 'y1']], axis=1)
-// alpha = np.arctan2(sample['y1'], sample['x1'])
-// sample['a'] = np.unwrap(alpha, period=np.pi)
-// sample['da'] = scsig.savgol_filter(sample['a'], deriv=1, **savgol_dict) * 10
+
 async function compute_features(segment) {
-    // segment = segment[0].split(" ");
-    // segment = segment.map(x => JSON.parse("[" + x + "]"));
+
+    // segment contains: timestamp, x, y, p
 
     if (segment.length > 10) {
-        var speed = segment.map(x => Math.pow(x[0], 2) + Math.pow(x[1], 2));
-        var angle = segment.map(x => Math.atan2(x[1], x[0]));
+        var speed = segment.map(x => Math.pow(x[1], 2) + Math.pow(x[2], 2));
+        var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
         var dA = SG(angle, 1, options);
 
         // concat
@@ -240,9 +229,20 @@ async function compute_features(segment) {
         var endTime = performance.now();
 
         Max.post("DTW", res, endTime - startTime);
+        var dtw = await Max.outlet("dtw", res[1]);
+
+        if (LOGGING) {
+            var res = features.map(function(num, idx) {
+                return [num[0], num[1], N_STROKE, segment[idx][0], res[0], res[1]]
+            });
+            for (var i = 0; i < res.length; i++) {
+                // Max.post("feat", res[i]);
+                var tmp = await Max.outlet("logging_feat", JSON.stringify(res[i]));
+            }
+            // res = await Max.outlet("logging_feat", JSON.stringify(res));
+        }
     }
 }
-
 
 
 var distance_p1_2d = function (a, b) {
@@ -253,7 +253,6 @@ var distance_p1_2d = function (a, b) {
 
 
 var models = {};
-
 function compute_distance(A) {
     n_models = Object.keys(models).length;
     if (n_models == 0) {

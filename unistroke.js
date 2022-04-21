@@ -43,7 +43,7 @@ Max.addHandler("play_one", async (...sample) => {
             await delay(delta);
         }
 
-        // add timstamp
+        // prepend timstamp
         to_print.unshift(t);
 
         var res = await Max.outlet("draw", to_print.join(" "));

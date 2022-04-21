@@ -9,8 +9,12 @@ import pandas as pd
 
 class OSCData():
     data = []
-    def handle(self, *args):
+    feat = []
+    def handle_data(self, *args):
         self.data.append(args)
+        print(args)
+    def handle_feat(self, *args):
+        self.feat.append(args)
         print(args)
 
 # def print_volume_handler(unused_addr, args, volume):
@@ -29,7 +33,9 @@ if __name__ == "__main__":
 
     SD = OSCData()
     dispatcher = dispatcher.Dispatcher()
-    dispatcher.map("/data", SD.handle)
+    dispatcher.map("/data", SD.handle_data)
+    dispatcher.map("/feat", SD.handle_feat)
+
     # dispatcher.map("/volume", print_volume_handler, "Volume")
     # dispatcher.map("/logvolume", print_compute_handler, "Log volume", math.log)
 
@@ -41,5 +47,6 @@ if __name__ == "__main__":
         server.serve_forever()
     except KeyboardInterrupt:
         pd.DataFrame(SD.data).to_csv("data.csv")
+        pd.DataFrame(SD.feat).to_csv("feat.csv")
         print("k")
 
