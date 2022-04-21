@@ -10,95 +10,87 @@ var nj = require("numjs");
 
 // local imports
 var debug = require('./debug.js');
+var timeinterp = require('./timeinterp.js');
 
-var LOGGING = true;
+var LOGGING_DEBUG = 1;
+var LOGGING_DATA = true;
 var to_log = {};
 var N_STROKE = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
-// 1. handle state, relative position
-// 2. resample uniformly in time
-// 3. low pass
 var new_stroke = false;
 var first_point = [];
 
 Max.addHandler("new_sample", async (...sample) => {
-    // Max.post("new_sample: ", sample);
+    // sample: t, ..., x, y, p
 
-    var timestamp = parseInt(sample[0]);
-    // timstamp = timestamp.toFixed();
-    // Max.post("timstamp", timestamp);
+    // linear time interpolation
+    var timestamp0 = parseInt(sample[0]);
+    var xyp = sample.slice(-3);
+    var sample_interp = timeinterp.new_sample(timestamp0, xyp);
 
-    xyp = sample.slice(-3);
+    Max.post("res", sample, sample_interp.length);
 
-    // LOGGING
-    if (LOGGING) {
-        to_log[timestamp] = {'xyp': xyp, 'new_stroke': new_stroke};
-    }
+    // loop over interpolated samples
+    for (index in sample_interp) {
+        if (LOGGING_DEBUG > 1) {Max.post(timestamp0, sample_interp.length, sample_interp[index][0]);}
 
-    if (new_stroke) {
-        Max.post("stroke touchdown", xyp);
-        first_point = xyp;
-        first_point[2] = 0; // initial pressure is always 0
-        new_stroke = false;
-    }
+        var timestamp_interp = sample_interp[index][0];
+        var xyp_interp = sample_interp[index].slice(-3);
 
-    // substract current position from first stroke point touchdown
-    var finger = sample[1];
-    if (finger == 1) {
-        var rel_xyp = xyp.map(function (num, idx) { return num-first_point[idx] });
-        var rel_xyp_lp = lowpass(rel_xyp);
+        if (LOGGING_DATA) {
+            to_log[timestamp_interp] = {'xyp': xyp_interp, 'new_stroke': new_stroke};
+        }
 
-        // send to pipo
-        rel_xyp_lp = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
-        var res = [timestamp].concat(rel_xyp_lp)
-        // var res = res.map(function (num, idx) {return num.toFixed(20)});
-        // Max.post(timestamp, rel_xyp_lp);
-        var res = await Max.outlet("lowpass", res.join(" "));
+        if (new_stroke) {
+            if (LOGGING_DEBUG > 0) {Max.post("stroke touchdown", timestamp_interp, xyp_interp);}
+            first_point = xyp_interp;
+            first_point[2] = 0; // initial pressure is always 0
+            new_stroke = false;
+        }
 
-        // LOGGING
-        if (LOGGING) {
-            var obj = to_log[timestamp]
-            obj['xyp_lp'] = rel_xyp_lp;
+        // substract current position from first stroke point touchdown
+        var finger = sample[1];
+        if (finger == 1) {
+            var rel_xyp = xyp_interp.map(function (num, idx) { return num-first_point[idx] });
+            var rel_xyp_lp = lowpass(rel_xyp);
+
+            // send to pipo
+            rel_xyp_lp = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
+            var res = [timestamp_interp].concat(rel_xyp_lp)
+            var res = await Max.outlet("lowpass", res.join(" "));
+
+            if (LOGGING_DATA) {
+                var obj = to_log[timestamp_interp]
+                obj['xyp_lp'] = rel_xyp_lp;
+            }
         }
     }
 
 });
 
+////////////////////////////////////////////////////////////////////////////////
 Max.addHandler("new_state", async (...state) => {
-    Max.post("new_state: ", state);
-
+    Max.post("new_state:", state);
+    // new state is one one touch down and 0 on touch up
     new_stroke = (state == 1);
     if (new_stroke) {
         Max.post("new stroke\n");
 
-        fun_new_stroke();
-        erase_last_stroke();
     }
     else {
+        // reset LPF and SG
+        for (var i=0; i<NDIMS; i++) {
+            iirFilters[i].reinit();
+        }
+        var res = await Max.outlet("reset_sg");
+        // erase stored data
+        stroke = [];
+        speeds = [];
+        timeinterp.reset();
         Max.post("end stroke\n");
-
-        var res = compute_features(stroke);
-        // post("end stroke\n");
-        // outlet(1, "end_stroke");
     }
-
 });
-
-
-
-async function fun_new_stroke(arg) {
-// reset LPF
-    reset_filters();
-// reset SG
-    var res = await Max.outlet("reset_sg");
-}
-
-function reset_filters(arg) {
-    for (var i=0; i<NDIMS; i++) {
-        iirFilters[i].reinit();
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Instance of a filter coefficient calculator, get available filters
@@ -149,7 +141,7 @@ Max.addHandler("segment", async (...sample) => {
     var timestamp = sample[0];
     var xyp = sample.slice(-3);
 
-    if (LOGGING) {
+    if (LOGGING_DATA) {
         var obj = to_log[timestamp];
         obj['xyp_sg'] = xyp;
         obj['timestamp'] = timestamp;
@@ -182,30 +174,14 @@ Max.addHandler("segment", async (...sample) => {
 });
 
 async function new_segment() {
-// individual segment within a stroke
+    // individual segment within a stroke
     N_STROKE += 1;
-
     Max.post("SEGMENT:", N_STROKE, stroke.length);
     segment = stroke.splice(0, stroke.length-1);
     compute_features(segment);
 }
 
-function erase_last_stroke() {
-// new touch detected
-    stroke = [];
-    speeds = []
-}
-
-// function end_stroke() {
-// // end of touch detected
-//     outlet(0, stroke.join(" "));
-// }
-
-
 ////////////////////////////////////////////////////////////////////////////////
-// 5. features
-
-
 var options = {
     derivative: 1,
     pad: 'post',
@@ -213,8 +189,7 @@ var options = {
 };
 
 async function compute_features(segment) {
-
-    // segment contains: timestamp, x, y, p
+    // segment : [[t, x, y, p],...]
 
     if (segment.length > 10) {
         var speed = segment.map(x => Math.pow(x[1], 2) + Math.pow(x[2], 2));
@@ -231,7 +206,7 @@ async function compute_features(segment) {
         Max.post("DTW", res, endTime - startTime);
         var dtw = await Max.outlet("dtw", res[1]);
 
-        if (LOGGING) {
+        if (LOGGING_DATA) {
             var res = features.map(function(num, idx) {
                 return [num[0], num[1], N_STROKE, segment[idx][0], res[0], res[1]]
             });

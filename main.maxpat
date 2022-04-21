@@ -709,7 +709,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 34.0, 256.0, 1318.0, 1150.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -900,7 +900,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
+						"rect" : [ 34.0, 256.0, 1318.0, 1150.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -930,6 +930,18 @@
 						"showontab" : 1,
 						"assistshowspatchername" : 0,
 						"boxes" : [ 							{
+								"box" : 								{
+									"id" : "obj-34",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 53.0, 735.349651336669922, 157.0, 22.0 ],
+									"text" : "script npm install everpolate"
+								}
+
+							}
+, 							{
 								"box" : 								{
 									"id" : "obj-45",
 									"maxclass" : "newobj",
@@ -1143,7 +1155,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 147.0, 753.349651336669922, 219.0, 22.0 ],
+									"patching_rect" : [ 53.0, 711.349651336669922, 219.0, 22.0 ],
 									"text" : "script npm install dynamic-time-warping"
 								}
 
@@ -1155,7 +1167,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 147.0, 729.349651336669922, 259.0, 22.0 ],
+									"patching_rect" : [ 53.0, 687.349651336669922, 259.0, 22.0 ],
 									"text" : "script npm install ml-savitzky-golay-generalized"
 								}
 
@@ -1245,7 +1257,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 147.0, 705.349651336669922, 113.0, 22.0 ],
+									"patching_rect" : [ 53.0, 663.349651336669922, 113.0, 22.0 ],
 									"text" : "script npm install fili"
 								}
 
@@ -1257,7 +1269,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 147.0, 681.349651336669922, 133.0, 22.0 ],
+									"patching_rect" : [ 53.0, 639.349651336669922, 133.0, 22.0 ],
 									"text" : "script npm install numjs"
 								}
 
@@ -1269,7 +1281,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 147.0, 657.349651336669922, 66.0, 22.0 ],
+									"patching_rect" : [ 53.0, 615.349651336669922, 66.0, 22.0 ],
 									"text" : "script start"
 								}
 
@@ -2098,6 +2110,13 @@
 								"patchline" : 								{
 									"destination" : [ "obj-21", 0 ],
 									"source" : [ "obj-33", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-39", 0 ],
+									"source" : [ "obj-34", 0 ]
 								}
 
 							}

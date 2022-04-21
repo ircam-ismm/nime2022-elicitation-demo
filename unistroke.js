@@ -55,7 +55,7 @@ var parsed = new Object();
 Max.addHandler("read", async (filename) => {
     let str = fs.readFileSync(filename,'utf8');
     parsed = JSON.parse(str);
-    // Max.post(filename, str, parsed);
+    Max.post("File ", filename, " read ok.");
 });
 
 //for testing - shows all the current objects in Max window
