@@ -6,43 +6,39 @@ var linear = require('everpolate').linear
 var firstpoint = true;
 
 function reset() {
-    Max.post("RESET!!!")
+    // Max.post("RESET!!!")
     firstpoint = true;
 }
 
 var stepsize = 10;
-var last_time = 0;
+var last_timestamp = 0;
 var last_values = 0;
 
-function new_sample(time, values) {
+function new_sample(timestamp, values, fp_timestamp) {
     // sample: t, [x, y, p]
-    // Max.post(sample);
 
-    // console.log("firstpoint", firstpoint);
-    if (firstpoint == true) {
-        Max.post("FIRSTPOINT", firstpoint);
-        firstpoint = false
-        last_time = time;
+    if (timestamp == fp_timestamp) {
+        last_timestamp = 0;
         last_values = values;
-        return [[time].concat(values)]
+        return [[0].concat(values)]
     }
+    // else
+    timestamp = timestamp-fp_timestamp;
 
-    starttime = last_time + (stepsize - last_time) % stepsize
-    endtime = time
+    starttime = last_timestamp + (stepsize - last_timestamp) % stepsize;
+    endtime = timestamp;
+
+    // fix for timestamp that happen on stepsize:
+    // consequence of last line: res.slice(1)
+    if ((endtime%stepsize)==0){endtime += 1;}
 
     time_steps = nj.arange(starttime, endtime, stepsize);
-
-    // Max.post("time_steps LENGTH", time_steps.length);
-
     value_steps = values.map(function (element, index) {
-        return linear(time_steps.tolist(), [last_time, time], [last_values[index], element])
+        return linear(time_steps.tolist(), [last_timestamp, timestamp], [last_values[index], element])
     });
-
     value_steps = nj.array(value_steps).T.tolist();
 
-    // console.log("value_steps", value_steps);
-
-    last_time = time
+    last_timestamp = timestamp
     last_values = values
 
     var res = time_steps.tolist().map(function (element, index) {
