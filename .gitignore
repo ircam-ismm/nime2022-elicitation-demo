@@ -1,8 +1,15 @@
+# python and jupter notebooks
 *ipynb_checkpoints*
 *__pycache__*
 
-node_modules
+# data
+data/user
+data/test
+
+# js test
 test_fili
 jstest
-data
+
+# js files
+node_modules
 package*

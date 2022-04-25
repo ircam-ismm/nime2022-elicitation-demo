@@ -27,6 +27,10 @@ def read_data():
     return data.iloc[:5000]
 data = read_data()
 
+
+
+
+
 def create_fig_all(data):
     fig = go.Figure()
 
@@ -113,3 +117,6 @@ def update_click(clickData):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
+
+

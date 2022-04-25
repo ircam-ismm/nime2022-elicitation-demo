@@ -74,7 +74,7 @@ Max.addHandler("new_sample", async (...sample) => {
         var sample_key = timestamp.toString() + "_" + timestamp_interp.toString();
         var xyp_interp = sample_interp[index].slice(-3);
 
-        Max.post("NEW", timestamp, timestamp_interp, sample_key);
+        // Max.post("NEW", timestamp, timestamp_interp, sample_key);
 
         // substract current position from first stroke point touchdown
         var rel_xyp = xyp_interp.map(function (num, idx) { return num-fp_values[idx] });
@@ -132,7 +132,7 @@ var speeds = [];
 var SPEED_THRESHOLD = 1.0;
 Max.addHandler("segment", async (...sample) => {
 
-    Max.post("IN SEGMENT", sample);
+    // Max.post("IN SEGMENT", sample);
 
     var sample_key = sample[0];
     var xyp = sample.slice(-3);
@@ -141,6 +141,16 @@ Max.addHandler("segment", async (...sample) => {
     var speed = Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2);
     speed = 10000 * speed;
     speeds.push(speed);
+
+    if (LOGGING_DATA) {
+        // Max.post("SEGMENT", sample_key);
+        var obj = to_log[sample_key];
+        if (obj == undefined) {
+            obj = {};
+        }
+        obj['xyp_sg'] = xyp;
+        var res = await Max.outlet("logging_data", JSON.stringify(obj));
+    }
 
     // Max.post("speed:", speed);
     // find extrema over the last three recorded points
@@ -156,13 +166,6 @@ Max.addHandler("segment", async (...sample) => {
         }
     }
 
-    if (LOGGING_DATA) {
-        Max.post("SEGMENT", sample_key);
-
-        var obj = to_log[sample_key];
-        obj['xyp_sg'] = xyp;
-        var res = await Max.outlet("logging_data", JSON.stringify(obj));
-    }
 
 });
 
@@ -186,41 +189,36 @@ var options = {
 async function compute_features(segment) {
     // segment : [[t, x, y, p],...]
 
+
+    var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
+    var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
+    var dA = SG(angle, 1, options);
+    // ADD pressure!!
+    // concat
+    var features = speed.map(function(num, idx) {return [num, dA[idx]]})
+
+    var res = [-1, -1];
     if (segment.length > 10) {
-        var speed = segment.map(x => Math.pow(x[1], 2) + Math.pow(x[2], 2));
-        var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
-        var dA = SG(angle, 1, options);
-        // ADD pressure!!
-
-        // concat
-        var features = speed.map(function(num, idx) {return [num, dA[idx]]})
-
         var startTime = performance.now();
         var res = compute_distance(features);
         var endTime = performance.now();
         Max.post("DTW", res, endTime - startTime);
-
         var dtw = await Max.outlet("dtw", res[1]);
+    }
 
-        if (LOGGING_DATA) {
-            // var res = features.map(function(num, idx) {
-            //     return [num[0], num[1], segment_id, segment[idx][0], res[0], res[1]]
-            // });
-
-            for (var i = 0; i < features.length; i++) {
-                var obj = {'sample_key': segment[i][0],
-                           's': features[i][0],
-                           'da': features[i][1],
-                           'segment_id': segment_id,
-                           'min_dtw': res[1],
-                           'min_dtw_id': res[0],
-                          };
-                var tmp = await Max.outlet("logging_feat", JSON.stringify(obj));
-            }
+    if (LOGGING_DATA) {
+        for (var i = 0; i < features.length; i++) {
+            var obj = {'sample_key': segment[i][0],
+                       's': features[i][0],
+                       'da': features[i][1],
+                       'segment_id': segment_id,
+                       'min_dtw': res[1],
+                       'min_dtw_id': res[0],
+                      };
+            var tmp = await Max.outlet("logging_feat", JSON.stringify(obj));
         }
     }
 }
-
 
 var distance_p1_2d = function (a, b) {
     var diff = a.map(function (i,j) {return Math.abs(i - b[j])});

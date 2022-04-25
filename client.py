@@ -9,13 +9,13 @@ import pandas as pd
 
 class OSCData():
     data = []
-    feat = []
-    def handle_data(self, *args):
+    # feat = []
+    def handle(self, *args):
         self.data.append(args)
         print(args)
-    def handle_feat(self, *args):
-        self.feat.append(args)
-        print(args)
+    # def handle_feat(self, *args):
+    #     self.feat.append(args)
+    #     print(args)
 
 # def print_volume_handler(unused_addr, args, volume):
 #     print("[{0}] ~ {1}".format(args[0], volume))
@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     SD = OSCData()
     dispatcher = dispatcher.Dispatcher()
-    dispatcher.map("/data", SD.handle_data)
-    dispatcher.map("/feat", SD.handle_feat)
+    dispatcher.map("/data", SD.handle)
+    dispatcher.map("/feat", SD.handle)
 
     # dispatcher.map("/volume", print_volume_handler, "Volume")
     # dispatcher.map("/logvolume", print_compute_handler, "Log volume", math.log)
@@ -55,9 +55,9 @@ if __name__ == "__main__":
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        filename = format_filename("./data", "data", now)
-        pd.DataFrame(SD.data).to_csv(filename)
-        filename = format_filename("./data", "feat", now)
-        pd.DataFrame(SD.feat).to_csv(filename)
+        filename = format_filename("./data/user", "data", now)
+        data = pd.DataFrame(SD.data).to_csv(filename)
+        # filename = format_filename("./data/user", "feat", now)
+        # pd.DataFrame(SD.feat).to_csv(filename)
         print("k")
 
