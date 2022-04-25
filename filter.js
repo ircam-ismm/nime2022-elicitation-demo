@@ -12,10 +12,11 @@ var nj = require("numjs");
 var debug = require('./debug.js');
 var timeinterp = require('./timeinterp.js');
 
+
+
 var LOGGING_DEBUG = 3;
 var LOGGING_DATA = true;
 var to_log = {};
-var segment_id = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // filter from incoming data source
@@ -63,33 +64,37 @@ Max.addHandler("new_sample", async (...sample) => {
     // linear time interpolation
     var sample_interp = timeinterp.new_sample(timestamp, xyp, fp_timestamp);
 
-    Max.post("NEW", timestamp, fp_timestamp, touching, finger, first_point_state, sample_interp.length);
+    // Max.post("NEW", timestamp, fp_timestamp, touching, finger, first_point_state, sample_interp.length);
 
     // loop over interpolated samples
     for (index in sample_interp) {
         if (LOGGING_DEBUG > 1) {Max.post("new_sample", timestamp, sample_interp.length, sample_interp[index][0]);}
 
         var timestamp_interp = sample_interp[index][0];
+        var sample_key = timestamp.toString() + "_" + timestamp_interp.toString();
         var xyp_interp = sample_interp[index].slice(-3);
+
+        Max.post("NEW", timestamp, timestamp_interp, sample_key);
 
         // substract current position from first stroke point touchdown
         var rel_xyp = xyp_interp.map(function (num, idx) { return num-fp_values[idx] });
         // lowpass
         var rel_xyp_lp = lowpass(rel_xyp);
         // send to pipo
-        rel_xyp_lp = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
-        var res = [timestamp_interp].concat(rel_xyp_lp)
+        var rel_xyp_lp_tosend = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
+        var res = [sample_key].concat(rel_xyp_lp_tosend)
         var res = await Max.outlet("lowpass", res.join(" "));
 
         if (LOGGING_DATA) {
-            to_log[timestamp_interp] = {'timestamp0': timestamp,
-                                        'timestamp': timestamp_interp,
-                                        'stroke_id': stroke_id,
-                                        // 'touching': touching,
-                                        'xyp': xyp_interp,
-                                        'rel_xyp': rel_xyp,
-                                        'rel_xyp_lp': rel_xyp_lp,
-                                        }
+            to_log[sample_key] = {'sample_key': sample_key,
+                                  'timestamp0': timestamp,
+                                  'timestamp': timestamp_interp,
+                                  'stroke_id': stroke_id,
+                                  // 'touching': touching,
+                                  'xyp': xyp_interp,
+                                  'rel_xyp': rel_xyp,
+                                  'rel_xyp_lp': rel_xyp_lp,
+                                  }
         }
     }
     } // if (finger == 1)
@@ -126,7 +131,10 @@ var stroke = [];
 var speeds = [];
 var SPEED_THRESHOLD = 1.0;
 Max.addHandler("segment", async (...sample) => {
-    var timestamp = sample[0];
+
+    Max.post("IN SEGMENT", sample);
+
+    var sample_key = sample[0];
     var xyp = sample.slice(-3);
 
     stroke.push(sample);
@@ -149,12 +157,16 @@ Max.addHandler("segment", async (...sample) => {
     }
 
     if (LOGGING_DATA) {
-        var obj = to_log[timestamp];
+        Max.post("SEGMENT", sample_key);
+
+        var obj = to_log[sample_key];
         obj['xyp_sg'] = xyp;
         var res = await Max.outlet("logging_data", JSON.stringify(obj));
     }
 
 });
+
+var segment_id = 0;
 
 async function new_segment() {
     // individual segment within a stroke
@@ -178,6 +190,7 @@ async function compute_features(segment) {
         var speed = segment.map(x => Math.pow(x[1], 2) + Math.pow(x[2], 2));
         var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
         var dA = SG(angle, 1, options);
+        // ADD pressure!!
 
         // concat
         var features = speed.map(function(num, idx) {return [num, dA[idx]]})
@@ -185,19 +198,25 @@ async function compute_features(segment) {
         var startTime = performance.now();
         var res = compute_distance(features);
         var endTime = performance.now();
-
         Max.post("DTW", res, endTime - startTime);
+
         var dtw = await Max.outlet("dtw", res[1]);
 
         if (LOGGING_DATA) {
-            var res = features.map(function(num, idx) {
-                return [num[0], num[1], segment_id, segment[idx][0], res[0], res[1]]
-            });
-            for (var i = 0; i < res.length; i++) {
-                // Max.post("feat", res[i]);
-                var tmp = await Max.outlet("logging_feat", JSON.stringify(res[i]));
+            // var res = features.map(function(num, idx) {
+            //     return [num[0], num[1], segment_id, segment[idx][0], res[0], res[1]]
+            // });
+
+            for (var i = 0; i < features.length; i++) {
+                var obj = {'sample_key': segment[i][0],
+                           's': features[i][0],
+                           'da': features[i][1],
+                           'segment_id': segment_id,
+                           'min_dtw': res[1],
+                           'min_dtw_id': res[0],
+                          };
+                var tmp = await Max.outlet("logging_feat", JSON.stringify(obj));
             }
-            // res = await Max.outlet("logging_feat", JSON.stringify(res));
         }
     }
 }
@@ -209,29 +228,40 @@ var distance_p1_2d = function (a, b) {
     return sum
 }
 
-
 var models = {};
 function compute_distance(A) {
+    // Computes the minimum DTW distance of A against all previously recorded
+    // identified segments.
+    // Inputs:
+    //   A: a multidimensional equispaced time series.
+    // Returns:
+    //   The minimum DTW distance.
+
+    var min_key = 0;
+    var min_dist = 10000;
+
     n_models = Object.keys(models).length;
+    // if no models yet, store series and return
     if (n_models == 0) {
         models[0] = A;
     }
+    // else loop over all models and find closest
     else {
-        var min_key = 0;
-        var min_dist = 10000;
+
         for (key in models) {
             var B = models[key];
-            var cur_dist = new DTW(A, B, distance_p1_2d);
-            var dist = cur_dist.getDistance();
+            var dtw = new DTW(A, B, distance_p1_2d);
+            var cur_dist = dtw.getDistance();
 
-            if (dist < min_dist) {
+            if (cur_dist < min_dist) {
                 min_key = key;
-                min_dist = dist;
+                min_dist = cur_dist;
             }
-            // store model
-            models[n_models] = A;
         }
+        // store model
+        models[n_models] = A;
     }
+
     return [min_key, min_dist]
 }
 

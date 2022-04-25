@@ -15,7 +15,15 @@ var last_timestamp = 0;
 var last_values = 0;
 
 function new_sample(timestamp, values, fp_timestamp) {
-    // sample: t, [x, y, p]
+    // Linear interpolation of incomming stream
+    // Inputs:
+    //   timestamp: sampling time of current sample.
+    //   values: array containing independent dimensions to filter.
+    //   fp_timestamp: sampling time of original sample, all subsequent
+    //               sample of zeroed in time against it.
+    // Returns:
+    //   An 2D array with rows containing the new sampling time and associated
+    //   filtered values.
 
     if (timestamp == fp_timestamp) {
         last_timestamp = 0;

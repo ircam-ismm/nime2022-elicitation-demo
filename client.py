@@ -25,6 +25,12 @@ class OSCData():
 #         print("[{0}] ~ {1}".format(args[0], args[1](volume)))
 #     except ValueError: pass
 
+from datetime import datetime
+import os
+def format_filename(root, name, date):
+    filename = os.path.join(root, name+"_"+date.strftime("%d%m%Y_%H%M%S")+".csv")
+    return filename
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", default="127.0.0.1", help="The ip to listen on")
@@ -43,10 +49,15 @@ if __name__ == "__main__":
       (args.ip, args.port), dispatcher)
     print("Serving on {}".format(server.server_address))
 
+    now = datetime.now()
+
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        pd.DataFrame(SD.data).to_csv("data.csv")
-        pd.DataFrame(SD.feat).to_csv("feat.csv")
+        filename = format_filename("./data", "data", now)
+        pd.DataFrame(SD.data).to_csv(filename)
+        filename = format_filename("./data", "feat", now)
+        pd.DataFrame(SD.feat).to_csv(filename)
         print("k")
 

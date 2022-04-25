@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 230.0, 1318.0, 1176.0 ],
+		"rect" : [ 162.0, 293.0, 1318.0, 999.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -56,7 +56,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -130,7 +130,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -635,7 +635,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -709,7 +709,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -900,7 +900,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1150.0 ],
+						"rect" : [ 162.0, 319.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -1342,6 +1342,8 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 0,
 										"defer" : 0,
+										"node_bin_path" : "",
+										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -2163,9 +2165,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-20", 0 ],
 									"order" : 2,
-									"source" : [ "obj-39", 0 ],
-									"watchpoint_flags" : 5,
-									"watchpoint_id" : 1
+									"source" : [ "obj-39", 0 ]
 								}
 
 							}
@@ -2429,7 +2429,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 34.0, 256.0, 1318.0, 1150.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -2547,8 +2547,8 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 572.0, 47.0, 49.0, 22.0 ],
-									"text" : "play_all"
+									"patching_rect" : [ 572.0, 47.0, 61.0, 22.0 ],
+									"text" : "play_n 10"
 								}
 
 							}
@@ -2573,35 +2573,6 @@
 									"outlettype" : [ "int" ],
 									"parameter_enable" : 0,
 									"patching_rect" : [ 713.0, 63.0, 24.0, 24.0 ]
-								}
-
-							}
-, 							{
-								"box" : 								{
-									"id" : "obj-45",
-									"maxclass" : "newobj",
-									"numinlets" : 1,
-									"numoutlets" : 1,
-									"outlettype" : [ "" ],
-									"patching_rect" : [ 171.5, 431.0, 125.0, 22.0 ],
-									"saved_object_attributes" : 									{
-										"filename" : "format_to_sensel.js",
-										"parameter_enable" : 0
-									}
-,
-									"text" : "js format_to_sensel.js"
-								}
-
-							}
-, 							{
-								"box" : 								{
-									"id" : "obj-40",
-									"maxclass" : "newobj",
-									"numinlets" : 2,
-									"numoutlets" : 2,
-									"outlettype" : [ "", "" ],
-									"patching_rect" : [ 171.5, 399.0, 55.0, 22.0 ],
-									"text" : "zl.slice 3"
 								}
 
 							}
@@ -2722,6 +2693,8 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 0,
 										"defer" : 0,
+										"node_bin_path" : "",
+										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -2983,15 +2956,6 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-18", 0 ],
-									"order" : 0,
-									"source" : [ "obj-20", 0 ]
-								}
-
-							}
-, 							{
-								"patchline" : 								{
-									"destination" : [ "obj-40", 0 ],
-									"order" : 1,
 									"source" : [ "obj-20", 0 ]
 								}
 
@@ -3097,7 +3061,9 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-10", 0 ],
-									"source" : [ "obj-38", 0 ]
+									"source" : [ "obj-38", 0 ],
+									"watchpoint_flags" : 5,
+									"watchpoint_id" : 1
 								}
 
 							}
@@ -3134,13 +3100,6 @@
 							}
 , 							{
 								"patchline" : 								{
-									"destination" : [ "obj-45", 0 ],
-									"source" : [ "obj-40", 0 ]
-								}
-
-							}
-, 							{
-								"patchline" : 								{
 									"destination" : [ "obj-38", 0 ],
 									"source" : [ "obj-41", 0 ]
 								}
@@ -3148,18 +3107,9 @@
 							}
 , 							{
 								"patchline" : 								{
-									"destination" : [ "obj-10", 0 ],
-									"source" : [ "obj-45", 0 ]
-								}
-
-							}
-, 							{
-								"patchline" : 								{
 									"destination" : [ "obj-27", 1 ],
 									"order" : 0,
-									"source" : [ "obj-5", 2 ],
-									"watchpoint_flags" : 5,
-									"watchpoint_id" : 2
+									"source" : [ "obj-5", 2 ]
 								}
 
 							}
@@ -3342,13 +3292,6 @@
 			}
 , 			{
 				"name" : "format_sg.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new",
-				"patcherrelativepath" : ".",
-				"type" : "TEXT",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "format_to_sensel.js",
 				"bootpath" : "~/Documents/research/rto_max/max_implementation/new",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
