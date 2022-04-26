@@ -9,6 +9,8 @@ dependencies:
 - matplotlib
 - seaborn
 - ipywidgets
+- scikit-learn
 
 - pip: 
   - dash
+  - dash-daq

@@ -1,4 +1,7 @@
 
+import seaborn as sns
+tab10 = sns.color_palette('tab10')
+
 # pandas select
 from functools import reduce
 from operator import and_, or_

@@ -6,12 +6,20 @@ import plotly.graph_objs as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash import callback
+import dash_daq as daq
 
-from utils import select
+from utils import select, tab10
 
 ################################################################################
 # LAYOUT
-components = [
+layout = [
+
+    html.Div([
+        daq.NumericInput(id='my-numeric-input-1',value=0, min=0, max=1e3),
+    ],
+    style={'width': '100%', 'display': 'inline-block'}
+    ),
+
     html.Div([
         dcc.Graph(id="fig_all",),
         dcc.RangeSlider(0, 20, 1, value=[0, 1], id='my-range-slider'),
@@ -30,26 +38,10 @@ components = [
 ################################################################################
 # CALLBACK
 
-
-# html.Div(id = "appRangeSlider")
-# ])
-
-# @app.callback(
-#     Output("appRangeSlider", "children"),
-#     [Input("group", "value")])
-
-# def plotRangeSlider(group):
-#     if group == "A":
-#         return dcc.RangeSlider(
-#             id = "my-range-slider",
-#             min = 0,
-#             max = 20,
-#             step = 0.5,
-#             value=[5, 15])
-
-@callback(Output('my-range-slider', 'max'),
-          # Output('my-range-slider', ''),
-          Input('data-store', 'data'))
+@callback(
+    Output('my-range-slider', 'max'),
+    Input('data-store', 'data')
+    )
 def update_rangeslider(jsonified_cleaned_data):
     if jsonified_cleaned_data is not None:
         data_df = format_from_json(jsonified_cleaned_data, source='/data')
@@ -57,15 +49,20 @@ def update_rangeslider(jsonified_cleaned_data):
     else: 
         return 20
 
-@callback(Output('fig_all', 'figure'),
-          Input('data-store', 'data'))
-def update_graph(jsonified_cleaned_data):
+import sklearn.preprocessing as skprep
+
+@callback(
+    Output('fig_all', 'figure'),
+    Input('data-store', 'data'),
+    Input('my-numeric-input-1', 'value'),
+    )
+def update_graph_all(jsonified_cleaned_data, value):
     """Create the graph for data all when the datastore is updated.
     """
 
     fig = go.Figure()
 
-    print("update_graph")
+    print("update_graph", value)
     if jsonified_cleaned_data is not None:
 
         data = pd.read_json(jsonified_cleaned_data, orient='split')
@@ -73,11 +70,70 @@ def update_graph(jsonified_cleaned_data):
         select_df = select(data, source='/data')
         data_df = format_data(select_df)
 
+        mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1))
+
         # hovertext = np.c_[data['n_stroke'].index, data['n_stroke'].values]
-        scatter = go.Scatter(x=data_df['x'], y=data_df['y'], mode='markers',)
-                             # hovertext=hovertext,
-                             # opacity=.1, marker={'color':'black'},)
+        scatter = go.Scatter(
+            x=data_df['x'], y=data_df['y'],
+            mode='markers',
+            marker={'size':p_scaled, 'color':'black'},
+            # hovertext=hovertext,
+            opacity=.1,
+            name='all data')
         fig.add_trace(scatter)
+
+
+        stroke_df = select(data_df, stroke_id=value)
+        print(stroke_df)
+        scatter = go.Scatter(
+            x=stroke_df['x'], y=stroke_df['y'], mode='markers',
+            marker={'size':10, 'color':'blue'},
+            # hovertext=hovertext,
+            opacity=1,
+            name='stroke '+str(value))
+        fig.add_trace(scatter)
+
+        fig.update_layout(
+            autosize=False,
+            width=1000,
+            height=1000,
+        )
+
+    return fig
+
+
+@callback(
+    Output('fig_trace', 'figure'),
+    Input('data-store', 'data'),
+    Input('my-numeric-input-1', 'value'),
+    )
+def update_graph_stroke(jsonified_cleaned_data, value):
+    fig = go.Figure()
+
+    if jsonified_cleaned_data is not None:
+        # get both df
+        data = pd.read_json(jsonified_cleaned_data, orient='split')
+        data.columns = [0, 'source', 'data']
+        select_df = select(data, source='/data')
+        data_df = format_data(select_df)
+        select_df = select(data, source='/feat')
+        feat_df = format_feat(select_df)
+
+        # select stroke
+        stroke_i = select(data_df, stroke_id=value)
+        stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
+
+        colors = [tab10[int(i)] for i in stroke_i_feat['segment_id']]
+
+        scatter = go.Scatter(
+            x=stroke_i_feat['x'], y=stroke_i_feat['y'], mode='markers',
+            marker={'size':data_df['p']*100, 'color':colors},
+            # hovertext=hovertext,
+            opacity=1,
+            name='stroke '+str(value))
+        fig.add_trace(scatter)
+
         fig.update_layout(
             autosize=False,
             width=1000,
@@ -94,7 +150,12 @@ def format_from_json(jsonified_cleaned_data, source='/data'):
     data = pd.read_json(jsonified_cleaned_data, orient='split')
     data.columns = [0, 'source', 'data']
     select_df = select(data, source=source)
-    data_df = format_data(select_df)
+
+    if source == '/data':
+        data_df = format_data(select_df)
+    elif source == '/feat':
+        data_df = format_feat(select_df)
+
     return data_df
 
 def format_data(df):
@@ -130,7 +191,7 @@ def format_feat(df):
     # feat = feat['1'].str.replace('null', '0')??
     new_rows = []
     for i, row in df.iterrows():
-        row = eval(row[1])
+        row = eval(row['data'])
         key = row['sample_key']
         segment_id = row['segment_id']
         s = row['s']
