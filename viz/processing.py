@@ -7,32 +7,40 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash import callback
 import dash_daq as daq
+import dash_bootstrap_components as dbc
 
-from utils import select, tab10
+from utils import format_from_json, tab10, select
+
 
 ################################################################################
 # LAYOUT
 layout = [
 
     html.Div([
-        daq.NumericInput(id='my-numeric-input-1',value=86, min=0, max=1e3),
+        html.H5("Select stroke:"),
+        daq.NumericInput(id='my-numeric-input-1',value=0, min=0, max=1e3),
     ],
     style={'width': '100%', 'display': 'inline-block'}
     ),
 
     html.Div([
-        dcc.Graph(id="fig_all",),
-        # dcc.RangeSlider(0, 20, 1, value=[0, 1], id='my-range-slider'),
+        dbc.Col([
+            dcc.Graph(id="fig_all",),
+            ]),
         ],
         style={'width': '49%', 'display': 'inline-block'},
     ),
     
     html.Div([
-        dcc.Graph(id="fig_trace",),
+        dbc.Col([
+            dcc.Graph(id="fig_trace",),
+            dcc.Graph(id="fig_speed",),
+            ]),
         ],
-        style={'width': '49%', 'display': 'inline-block'},
+        style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
     ),
 
+    # this align the slider to the right hand side
     html.Div([], style={'width': '49%', 'display': 'inline-block'},),
 
     html.Div([
@@ -56,6 +64,21 @@ layout = [
 #     else:
 #         return 20
 
+
+@callback(
+    Output('my-numeric-input-1', 'min'),
+    Output('my-numeric-input-1', 'max'),
+    Output('my-numeric-input-1', 'value'),
+    Input('data-store', 'data'),
+    )
+def update_rangeslider(jsonified_cleaned_data):
+    if jsonified_cleaned_data is not None:
+        data_df = format_from_json(jsonified_cleaned_data, source='/data')
+        stroke_id_list = np.array(list(set(data_df['stroke_id'])))
+        return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
+    else:
+        return 0, 10, 1
+
 import sklearn.preprocessing as skprep
 
 @callback(
@@ -72,20 +95,15 @@ def update_graph_all(jsonified_cleaned_data, value):
     print("update_graph", value)
     if jsonified_cleaned_data is not None:
 
-        data = pd.read_json(jsonified_cleaned_data, orient='split')
-        data.columns = [0, 'source', 'data']
-        select_df = select(data, source='/data')
-        data_df = format_data(select_df)
+        data_df = format_from_json(jsonified_cleaned_data, source='/data')
 
         mms = skprep.MinMaxScaler(feature_range=(10, 80))
         p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1))
 
-        # hovertext = np.c_[data['n_stroke'].index, data['n_stroke'].values]
         scatter = go.Scatter(
             x=data_df['x'], y=data_df['y'],
             mode='markers',
             marker={'size':p_scaled, 'color':'black'},
-            # hovertext=hovertext,
             opacity=.1,
             name='all data')
         fig.add_trace(scatter)
@@ -96,7 +114,6 @@ def update_graph_all(jsonified_cleaned_data, value):
             scatter = go.Scatter(
                 x=stroke_df['x'], y=stroke_df['y'], mode='markers',
                 marker={'size':p_scaled, 'color':'blue'},
-                # hovertext=hovertext,
                 opacity=1,
                 name='stroke '+str(value))
             fig.add_trace(scatter)
@@ -120,13 +137,9 @@ def update_graph_stroke(jsonified_cleaned_data, numinput_value, dropdown_value):
     fig = go.Figure()
 
     if jsonified_cleaned_data is not None:
-        # get both df
-        data = pd.read_json(jsonified_cleaned_data, orient='split')
-        data.columns = [0, 'source', 'data']
-        select_df = select(data, source='/data')
-        data_df = format_data(select_df)
-        select_df = select(data, source='/feat')
-        feat_df = format_feat(select_df)
+
+        data_df = format_from_json(jsonified_cleaned_data, source='/data')
+        feat_df = format_from_json(jsonified_cleaned_data, source='/feat')
 
         mms = skprep.MinMaxScaler(feature_range=(10, 80))
         mms.fit(data_df['p'].values.reshape(-1,1))
@@ -139,13 +152,20 @@ def update_graph_stroke(jsonified_cleaned_data, numinput_value, dropdown_value):
             stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
 
             if stroke_i_feat.shape[0] > 0:
-                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
+                p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1))
+                scatter = go.Scatter(
+                    x=stroke_i['x'], y=stroke_i['y'], mode='markers', marker_symbol='x',
+                    opacity=0.1, marker={'size':p_scaled, 'color':'black'},
+                    )
+                fig.add_trace(scatter)
 
-                colors = ["rgba"+str(tab10[int(i)]+(1,)) for i in stroke_i_feat['segment_id']]
+                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
+                colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
                 scatter = go.Scatter(
                     x=stroke_i_feat['x'], y=stroke_i_feat['y'], mode='markers',
                     marker={'size':p_scaled, 'color':colors},
-                    # hovertext=hovertext,
+                    customdata=stroke_i_feat['segment_id'],
+                    hovertemplate="%{customdata}",
                     opacity=1,
                     name='stroke '+str(numinput_value))
                 fig.add_trace(scatter)
@@ -159,74 +179,55 @@ def update_graph_stroke(jsonified_cleaned_data, numinput_value, dropdown_value):
     return fig
 
 
-# @app.callback(
-#     Output('dd-output-container', 'children'),
-#     Input('demo-dropdown', 'value')
-# )
-# def update_output(value):
-#     return f'You have selected {value}'
 
-################################################################################
-# LOCAL
 
-def format_from_json(jsonified_cleaned_data, source='/data'):
-    data = pd.read_json(jsonified_cleaned_data, orient='split')
-    data.columns = [0, 'source', 'data']
-    select_df = select(data, source=source)
+@callback(
+    Output('fig_speed', 'figure'),
+    Input('data-store', 'data'),
+    Input('my-numeric-input-1', 'value'),
+    Input('demo-dropdown', 'value')
+    )
+def update_graph_speed(jsonified_cleaned_data, numinput_value, dropdown_value):
+    fig = go.Figure()
 
-    if source == '/data':
-        data_df = format_data(select_df)
-    elif source == '/feat':
-        data_df = format_feat(select_df)
+    if jsonified_cleaned_data is not None:
+        pass
 
-    return data_df
+        data_df = format_from_json(jsonified_cleaned_data, source='/data')
+        feat_df = format_from_json(jsonified_cleaned_data, source='/feat')
 
-def format_data(df):
-    new_rows = []
-    default_value = np.ones(3) * np.nan
+        mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        mms.fit(data_df['p'].values.reshape(-1,1))
 
-    for i, row in df.iterrows():
+        # select stroke
+        stroke_i = select(data_df, stroke_id=numinput_value)
 
-        row = eval(row['data'].replace("false", "False"))
+        if stroke_i.shape[0] > 0:
 
-        key = row['sample_key']
-        t0 = row['timestamp0']
-        ts = row['timestamp']
-        stroke_id = row['stroke_id']
+            stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
 
-        x, y, p = row.get('xyp', default_value)
-        x_, y_, p_ = row.get('rel_xyp', default_value)
-        x0, y0, p0 = row.get('rel_xyp_lp', default_value)
-        x1, y1, p1 = row.get('xyp_sg', default_value)
+            if stroke_i_feat.shape[0] > 0:
 
-        new_row = [key, t0, ts, stroke_id, x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1]
-        new_rows.append(new_row)
+                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
+                colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
+                scatter = go.Scatter(
+                    x=stroke_i_feat['ts'], y=stroke_i_feat['s'], mode='markers',
+                    marker={'size':p_scaled, 'color':colors},
+                    customdata=stroke_i_feat['segment_id'],
+                    hovertemplate="%{customdata}",
+                    opacity=1,
+                    name='stroke '+str(numinput_value))
+                fig.add_trace(scatter)
 
-    data = pd.DataFrame(data=new_rows,
-                        columns=['key', 't0', 'ts', 'stroke_id',
-                                 'x', 'y', 'p', 'x_', 'y_', 'p_',
-                                 'x0', 'y0', 'p0', 'x1', 'y1', 'p1']
-                       )
+                fig.update_layout(
+                    autosize=False,
+                    width=1000,
+                    height=1000,
+                )
 
-    return data
+    return fig
 
-def format_feat(df):
-    # feat = feat['1'].str.replace('null', '0')??
-    new_rows = []
-    for i, row in df.iterrows():
-        row = eval(row['data'])
-        key = row['sample_key']
-        segment_id = row['segment_id']
-        s = row['s']
-        da = row['da']
-        min_dtw = row.get('min_dtw', -1)
-        min_dtw_id = row.get('min_dtw_id', -1)
 
-        new_row = [key, segment_id, s, da, min_dtw, min_dtw_id]
-        new_rows.append(new_row)
 
-    data = pd.DataFrame(data=new_rows,
-                        columns=['key', 'segment_id', 's', 'da', 'min_dtw', 'min_dtw_id'])
-    # data = data.convert_dtypes()
-    return data
+
 

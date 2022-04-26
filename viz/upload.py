@@ -7,8 +7,10 @@ from dash.dependencies import Input, Output, State
 from dash import callback
 from dash import dash_table
 
+import numpy as np
 import pandas as pd
 
+from utils import format_from_json
 
 ################################################################################
 # LAYOUT
@@ -44,6 +46,7 @@ layout = [
 
 ################################################################################
 # CALLBACK
+
 
 @callback(
     Output('output-data-upload', 'children'),
@@ -84,14 +87,19 @@ def parse_contents(contents, filename, date):
             'There was an error processing this file.'
         ])
 
+    jsonified_cleaned_data = df.to_json(date_format='iso', orient='split')
+
+    data_df = format_from_json(jsonified_cleaned_data, source='/data')
+    stroke_id_list = np.array(list(set(data_df['stroke_id'])))
+    a, b = stroke_id_list.min(), stroke_id_list.max(),
+
     table_data = [
     ['filename', filename],
     ['lines', str(df.shape[0])],
-    ['stroke_id', '86 ... 89'],
+    ['stroke_id', str(a)+' ... '+str(b)],
     ]
 
-
-    a = html.Div([
+    html_table = html.Div([
         # html.H5(filename),
         # html.H6(datetime.datetime.fromtimestamp(date)),
         # html.H6(str(df.shape[0])+" lines"),
@@ -121,6 +129,4 @@ def parse_contents(contents, filename, date):
         # })
     ])
 
-    b = df.to_json(date_format='iso', orient='split')
-
-    return a, b
+    return html_table, jsonified_cleaned_data

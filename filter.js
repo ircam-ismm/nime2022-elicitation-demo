@@ -127,6 +127,7 @@ function lowpass(sample) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // perform SG filtering in pipo and get back results
+// receives the derivatives of xyp
 var stroke = [];
 var speeds = [];
 var SPEED_THRESHOLD = 1.0;
@@ -138,8 +139,8 @@ Max.addHandler("segment", async (...sample) => {
     var xyp = sample.slice(-3);
 
     stroke.push(sample);
-    var speed = Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2);
-    speed = 10000 * speed;
+    var speed = Math.sqrt(Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2));
+    speed = 100 * speed;
     speeds.push(speed);
 
     if (LOGGING_DATA) {
