@@ -57,7 +57,8 @@ def format_feat(df):
         key = row['sample_key']
         segment_id = row['segment_id']
         s = row['s']
-        da = row['da']
+        # in case da does not exist
+        da = row.get('da', 0)
         min_dtw = row.get('min_dtw', -1)
         min_dtw_id = row.get('min_dtw_id', -1)
 

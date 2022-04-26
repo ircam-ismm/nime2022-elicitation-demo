@@ -50,8 +50,12 @@ Max.addHandler("new_sample", async (...sample) => {
     // last point
     if (!touching) {
         Max.post("LAST POINT");
-        first_point_state = true;
 
+        if (stroke.length > 10) {
+            new_segment(); // send the last recorded data as a new segment
+        }
+
+        first_point_state = true;
         for (var i=0; i<NDIMS; i++) {iirFilters[i].reinit();}
         stroke = [];
         speeds = [];
@@ -68,7 +72,7 @@ Max.addHandler("new_sample", async (...sample) => {
 
     // loop over interpolated samples
     for (index in sample_interp) {
-        if (LOGGING_DEBUG > 1) {Max.post("new_sample", timestamp, sample_interp.length, sample_interp[index][0]);}
+        // if (LOGGING_DEBUG > 1) {Max.post("new_sample", timestamp, sample_interp.length, sample_interp[index][0]);}
 
         var timestamp_interp = sample_interp[index][0];
         var sample_key = timestamp.toString() + "_" + timestamp_interp.toString();
@@ -143,6 +147,24 @@ Max.addHandler("segment", async (...sample) => {
     speed = 100 * speed;
     speeds.push(speed);
 
+    Max.post("segment: ", stroke.length, speed);
+
+
+    // Max.post("speed:", speed);
+    // find extrema over the last three recorded points
+    if (stroke.length > 3) {
+        var last_3 = speeds.slice(-3);
+        // Max.post("last_3:", last_3, last_3[0] > last_3[1], last_3[2] > last_3[1]);
+        // local minimum
+        if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
+            Max.post("min: ", stroke.length, last_3[1]);
+            if ((last_3[1] < SPEED_THRESHOLD) || (stroke.length > 50)) {
+                Max.post("SEGMENT !!!:", segment_id, stroke.length);
+                new_segment();
+            }
+        }
+    }
+
     if (LOGGING_DATA) {
         // Max.post("SEGMENT", sample_key);
         var obj = to_log[sample_key];
@@ -153,21 +175,6 @@ Max.addHandler("segment", async (...sample) => {
         var res = await Max.outlet("logging_data", JSON.stringify(obj));
     }
 
-    // Max.post("speed:", speed);
-    // find extrema over the last three recorded points
-    if (stroke.length > 3) {
-        var last_3 = speeds.slice(-3);
-        // Max.post("last_3:", last_3, last_3[0] > last_3[1], last_3[2] > last_3[1]);
-        // local minimum
-        if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
-            // Max.post("min: ", stroke.length, last_3[0], last_3[1], last_3[2]);
-            if ((last_3[1] < SPEED_THRESHOLD) || (stroke.length > 50)) {
-                new_segment();
-            }
-        }
-    }
-
-
 });
 
 var segment_id = 0;
@@ -175,7 +182,6 @@ var segment_id = 0;
 async function new_segment() {
     // individual segment within a stroke
     segment_id += 1;
-    Max.post("SEGMENT:", segment_id, stroke.length);
     segment = stroke.splice(0, stroke.length-1);
     compute_features(segment);
 }

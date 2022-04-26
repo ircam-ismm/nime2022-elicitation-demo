@@ -211,7 +211,7 @@ def update_graph_speed(jsonified_cleaned_data, numinput_value, dropdown_value):
                 p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
                 colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
                 scatter = go.Scatter(
-                    x=stroke_i_feat['ts'], y=stroke_i_feat['s'], mode='markers',
+                    x=stroke_i_feat['ts'], y=100*stroke_i_feat['s'], mode='markers',
                     marker={'size':p_scaled, 'color':colors},
                     customdata=stroke_i_feat['segment_id'],
                     hovertemplate="%{customdata}",

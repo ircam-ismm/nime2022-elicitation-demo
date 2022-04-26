@@ -2,7 +2,8 @@ import dash
 from dash import html
 
 ################################################################################
-# The following modules contain their own layout and callbacks
+# The following modules contain their own layout and callbacks.
+# See https://dash.plotly.com/urls for info about program structure.
 import upload
 import processing
 
