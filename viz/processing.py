@@ -1,17 +1,101 @@
-from dash import dcc, html
-
-components = [
-    html.Div([dcc.Graph(id="fig_all",),],
-             style={'width': '49%', 'display': 'inline-block'},
-            ),
-    html.Div([dcc.Graph(id="fig_trace",),],
-             style={'width': '49%', 'display': 'inline-block'},
-            )
-    ]
-
-
 import numpy as np
 import pandas as pd
+
+import plotly.graph_objs as go
+
+from dash import dcc, html
+from dash.dependencies import Input, Output
+from dash import callback
+
+from utils import select
+
+################################################################################
+# LAYOUT
+components = [
+    html.Div([
+        dcc.Graph(id="fig_all",),
+        dcc.RangeSlider(0, 20, 1, value=[0, 1], id='my-range-slider'),
+        ],
+        style={'width': '49%', 'display': 'inline-block'},
+    ),
+    
+    html.Div([
+        dcc.Graph(id="fig_trace",),
+        ],
+        style={'width': '49%', 'display': 'inline-block'},
+    )
+]
+
+
+################################################################################
+# CALLBACK
+
+
+# html.Div(id = "appRangeSlider")
+# ])
+
+# @app.callback(
+#     Output("appRangeSlider", "children"),
+#     [Input("group", "value")])
+
+# def plotRangeSlider(group):
+#     if group == "A":
+#         return dcc.RangeSlider(
+#             id = "my-range-slider",
+#             min = 0,
+#             max = 20,
+#             step = 0.5,
+#             value=[5, 15])
+
+@callback(Output('my-range-slider', 'max'),
+          # Output('my-range-slider', ''),
+          Input('data-store', 'data'))
+def update_rangeslider(jsonified_cleaned_data):
+    if jsonified_cleaned_data is not None:
+        data_df = format_from_json(jsonified_cleaned_data, source='/data')
+        return len(set(data_df['stroke_id']))
+    else: 
+        return 20
+
+@callback(Output('fig_all', 'figure'),
+          Input('data-store', 'data'))
+def update_graph(jsonified_cleaned_data):
+    """Create the graph for data all when the datastore is updated.
+    """
+
+    fig = go.Figure()
+
+    print("update_graph")
+    if jsonified_cleaned_data is not None:
+
+        data = pd.read_json(jsonified_cleaned_data, orient='split')
+        data.columns = [0, 'source', 'data']
+        select_df = select(data, source='/data')
+        data_df = format_data(select_df)
+
+        # hovertext = np.c_[data['n_stroke'].index, data['n_stroke'].values]
+        scatter = go.Scatter(x=data_df['x'], y=data_df['y'], mode='markers',)
+                             # hovertext=hovertext,
+                             # opacity=.1, marker={'color':'black'},)
+        fig.add_trace(scatter)
+        fig.update_layout(
+            autosize=False,
+            width=1000,
+            height=1000,
+        )
+
+    return fig
+
+
+################################################################################
+# LOCAL
+
+def format_from_json(jsonified_cleaned_data, source='/data'):
+    data = pd.read_json(jsonified_cleaned_data, orient='split')
+    data.columns = [0, 'source', 'data']
+    select_df = select(data, source=source)
+    data_df = format_data(select_df)
+    return data_df
 
 def format_data(df):
     new_rows = []
@@ -19,10 +103,7 @@ def format_data(df):
 
     for i, row in df.iterrows():
 
-        print('ROW', row)
-
         row = eval(row['data'].replace("false", "False"))
-
 
         key = row['sample_key']
         t0 = row['timestamp0']
@@ -42,7 +123,7 @@ def format_data(df):
                                  'x', 'y', 'p', 'x_', 'y_', 'p_',
                                  'x0', 'y0', 'p0', 'x1', 'y1', 'p1']
                        )
-    # data['key'] = data
+
     return data
 
 def format_feat(df):
@@ -65,36 +146,3 @@ def format_feat(df):
     # data = data.convert_dtypes()
     return data
 
-
-
-
-# pandas select
-from functools import reduce
-from operator import and_, or_
-def select(df, **kwargs):
-    '''Builds a boolean array where columns indicated by keys in kwargs are tested for equality to their values.
-    In the case where a value is a list, a logical or is performed between the list of resulting boolean arrays.
-    Finally, a logical and is performed between all boolean arrays.
-    '''
-    res = []
-
-    for k, v in kwargs.items():
-        # several values for multiple column selection
-        if isinstance(v, list):
-            res_or = []
-            for w in v:
-                res_or.append(df[k] == w)
-            res_or = reduce(lambda x, y: or_(x,y), res_or)
-            res.append(res_or)
-        # single column selection
-        else:
-            res.append(df[k] == v)
-
-    # logical and
-    if res:
-        res = reduce(lambda x, y: and_(x,y), res)
-        res = df[res]
-    else:
-        res = df
-
-    return res

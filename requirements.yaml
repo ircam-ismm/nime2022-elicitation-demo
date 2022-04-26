@@ -1,0 +1,14 @@
+# run: conda env create --file requirements.yaml
+name: rto_nime22
+dependencies:
+
+- python=3.7
+- pip
+- click
+- pandas
+- matplotlib
+- seaborn
+- ipywidgets
+
+- pip: 
+  - dash
