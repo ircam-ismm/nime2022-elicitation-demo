@@ -15,14 +15,14 @@ from utils import select, tab10
 layout = [
 
     html.Div([
-        daq.NumericInput(id='my-numeric-input-1',value=0, min=0, max=1e3),
+        daq.NumericInput(id='my-numeric-input-1',value=86, min=0, max=1e3),
     ],
     style={'width': '100%', 'display': 'inline-block'}
     ),
 
     html.Div([
         dcc.Graph(id="fig_all",),
-        dcc.RangeSlider(0, 20, 1, value=[0, 1], id='my-range-slider'),
+        # dcc.RangeSlider(0, 20, 1, value=[0, 1], id='my-range-slider'),
         ],
         style={'width': '49%', 'display': 'inline-block'},
     ),
@@ -31,23 +31,30 @@ layout = [
         dcc.Graph(id="fig_trace",),
         ],
         style={'width': '49%', 'display': 'inline-block'},
-    )
+    ),
+
+    html.Div([], style={'width': '49%', 'display': 'inline-block'},),
+
+    html.Div([
+        dcc.Dropdown(['xy', 'feat'], 'xy', id='demo-dropdown'),
+        ], style={'width': '49%', 'display': 'inline-block'},),
+
 ]
 
 
 ################################################################################
 # CALLBACK
 
-@callback(
-    Output('my-range-slider', 'max'),
-    Input('data-store', 'data')
-    )
-def update_rangeslider(jsonified_cleaned_data):
-    if jsonified_cleaned_data is not None:
-        data_df = format_from_json(jsonified_cleaned_data, source='/data')
-        return len(set(data_df['stroke_id']))
-    else: 
-        return 20
+# @callback(
+#     Output('my-range-slider', 'max'),
+#     Input('data-store', 'data')
+#     )
+# def update_rangeslider(jsonified_cleaned_data):
+#     if jsonified_cleaned_data is not None:
+#         data_df = format_from_json(jsonified_cleaned_data, source='/data')
+#         return len(set(data_df['stroke_id']))
+#     else:
+#         return 20
 
 import sklearn.preprocessing as skprep
 
@@ -83,16 +90,16 @@ def update_graph_all(jsonified_cleaned_data, value):
             name='all data')
         fig.add_trace(scatter)
 
-
         stroke_df = select(data_df, stroke_id=value)
-        print(stroke_df)
-        scatter = go.Scatter(
-            x=stroke_df['x'], y=stroke_df['y'], mode='markers',
-            marker={'size':10, 'color':'blue'},
-            # hovertext=hovertext,
-            opacity=1,
-            name='stroke '+str(value))
-        fig.add_trace(scatter)
+        if stroke_df.shape[0] > 0:
+            p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1))
+            scatter = go.Scatter(
+                x=stroke_df['x'], y=stroke_df['y'], mode='markers',
+                marker={'size':p_scaled, 'color':'blue'},
+                # hovertext=hovertext,
+                opacity=1,
+                name='stroke '+str(value))
+            fig.add_trace(scatter)
 
         fig.update_layout(
             autosize=False,
@@ -107,8 +114,9 @@ def update_graph_all(jsonified_cleaned_data, value):
     Output('fig_trace', 'figure'),
     Input('data-store', 'data'),
     Input('my-numeric-input-1', 'value'),
+    Input('demo-dropdown', 'value')
     )
-def update_graph_stroke(jsonified_cleaned_data, value):
+def update_graph_stroke(jsonified_cleaned_data, numinput_value, dropdown_value):
     fig = go.Figure()
 
     if jsonified_cleaned_data is not None:
@@ -120,28 +128,43 @@ def update_graph_stroke(jsonified_cleaned_data, value):
         select_df = select(data, source='/feat')
         feat_df = format_feat(select_df)
 
+        mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        mms.fit(data_df['p'].values.reshape(-1,1))
+
         # select stroke
-        stroke_i = select(data_df, stroke_id=value)
-        stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
+        stroke_i = select(data_df, stroke_id=numinput_value)
 
-        colors = [tab10[int(i)] for i in stroke_i_feat['segment_id']]
+        if stroke_i.shape[0] > 0:
 
-        scatter = go.Scatter(
-            x=stroke_i_feat['x'], y=stroke_i_feat['y'], mode='markers',
-            marker={'size':data_df['p']*100, 'color':colors},
-            # hovertext=hovertext,
-            opacity=1,
-            name='stroke '+str(value))
-        fig.add_trace(scatter)
+            stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
 
-        fig.update_layout(
-            autosize=False,
-            width=1000,
-            height=1000,
-        )
+            if stroke_i_feat.shape[0] > 0:
+                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
+
+                colors = ["rgba"+str(tab10[int(i)]+(1,)) for i in stroke_i_feat['segment_id']]
+                scatter = go.Scatter(
+                    x=stroke_i_feat['x'], y=stroke_i_feat['y'], mode='markers',
+                    marker={'size':p_scaled, 'color':colors},
+                    # hovertext=hovertext,
+                    opacity=1,
+                    name='stroke '+str(numinput_value))
+                fig.add_trace(scatter)
+
+                fig.update_layout(
+                    autosize=False,
+                    width=1000,
+                    height=1000,
+                )
 
     return fig
 
+
+# @app.callback(
+#     Output('dd-output-container', 'children'),
+#     Input('demo-dropdown', 'value')
+# )
+# def update_output(value):
+#     return f'You have selected {value}'
 
 ################################################################################
 # LOCAL

@@ -53,7 +53,7 @@ layout = [
     State('upload-data', 'last_modified'),
     )
 def upload_data(list_of_contents, list_of_names, list_of_dates):
-    print("upload_data", list_of_contents, list_of_names, list_of_dates)
+    # print("upload_data", list_of_contents, list_of_names, list_of_dates)
     if list_of_contents is not None:
         children = [
             parse_contents(c, n, d) for c, n, d in
