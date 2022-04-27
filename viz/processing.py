@@ -52,18 +52,10 @@ layout = [
 
 ################################################################################
 # CALLBACK
-
-# @callback(
-#     Output('my-range-slider', 'max'),
-#     Input('data-store', 'data')
-#     )
-# def update_rangeslider(jsonified_cleaned_data):
-#     if jsonified_cleaned_data is not None:
-#         data_df = format_from_json(jsonified_cleaned_data, source='/data')
-#         return len(set(data_df['stroke_id']))
-#     else:
-#         return 20
-
+# Some graphs can be long to create due the amount of data points involved. We
+# therefore cache the figure when possible for background data.
+# See https://community.plotly.com/t/bypassing-serialization-of-dash-graph-
+# objects-for-efficient-server-side-caching/59669 for more info.
 
 @callback(
     Output('my-numeric-input-1', 'min'),
@@ -152,12 +144,12 @@ def update_graph_stroke(jsonified_cleaned_data, numinput_value, dropdown_value):
             stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
 
             if stroke_i_feat.shape[0] > 0:
-                p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1))
-                scatter = go.Scatter(
-                    x=stroke_i['x'], y=stroke_i['y'], mode='markers', marker_symbol='x',
-                    opacity=0.1, marker={'size':p_scaled, 'color':'black'},
-                    )
-                fig.add_trace(scatter)
+                # p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1))
+                # scatter = go.Scatter(
+                #     x=stroke_i['x'], y=stroke_i['y'], mode='markers', marker_symbol='x',
+                #     opacity=0.1, marker={'size':p_scaled, 'color':'black'},
+                #     )
+                # fig.add_trace(scatter)
 
                 p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
                 colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
