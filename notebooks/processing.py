@@ -26,11 +26,9 @@ def format_data(df):
                                  'x', 'y', 'p', 'x_', 'y_', 'p_', 
                                  'x0', 'y0', 'p0', 'x1', 'y1', 'p1']
                        )
-    # data['key'] = data
     return data
 
 def format_feat(df):
-    # feat = feat['1'].str.replace('null', '0')??
     new_rows = []
     for i, row in df.iterrows():
         row = eval(row['data'])
@@ -46,7 +44,6 @@ def format_feat(df):
 
     data = pd.DataFrame(data=new_rows, 
                         columns=['key', 'segment_id', 's', 'da', 'min_dtw', 'min_dtw_id'])
-    # data = data.convert_dtypes()
     return data
 
 

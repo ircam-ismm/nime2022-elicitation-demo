@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 
 import seaborn as sns
 tab10 = sns.color_palette('tab10')
@@ -5,19 +7,17 @@ tab10 = sns.color_palette('tab10')
 ################################################################################
 # data file processing
 
-import numpy as np
-import pandas as pd
-
 def format_from_json(jsonified_cleaned_data, source='/data'):
-    data = pd.read_json(jsonified_cleaned_data, orient='split')
-    data.columns = [0, 'source', 'data']
-    select_df = select(data, source=source)
+    df = pd.read_json(jsonified_cleaned_data, orient='split')
+    df.columns = [0, 'source', 'data']
+    return format_from_df(df, source=source)
 
+def format_from_df(df,  source='/data'):
+    select_df = select(df, source=source)
     if source == '/data':
         data_df = format_data(select_df)
     elif source == '/feat':
         data_df = format_feat(select_df)
-
     return data_df
 
 def format_data(df):
@@ -46,7 +46,6 @@ def format_data(df):
                                  'x', 'y', 'p', 'x_', 'y_', 'p_',
                                  'x0', 'y0', 'p0', 'x1', 'y1', 'p1']
                        )
-
     return data
 
 def format_feat(df):
@@ -67,7 +66,6 @@ def format_feat(df):
 
     data = pd.DataFrame(data=new_rows,
                         columns=['key', 'segment_id', 's', 'da', 'min_dtw', 'min_dtw_id'])
-    # data = data.convert_dtypes()
     return data
 
 

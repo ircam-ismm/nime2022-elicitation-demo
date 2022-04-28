@@ -1,24 +1,26 @@
 import numpy as np
 import pandas as pd
 
-import plotly.graph_objs as go
-
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash import callback
 import dash_daq as daq
 import dash_bootstrap_components as dbc
 
-from utils import format_from_json, tab10, select
+from utils import format_from_json, format_from_df, tab10, select
 
 
 ################################################################################
 # LAYOUT
 layout = [
+    # DATA
+    dcc.Store(id='data-store-fig_all'),
+    dcc.Store(id='data-store-sk'),
 
+    # FIGURES
     html.Div([
         html.H5("Select stroke:"),
-        daq.NumericInput(id='my-numeric-input-1',value=0, min=0, max=1e3),
+        daq.NumericInput(id='button-stroke-id',value=0, min=0, max=1e3),
     ],
     style={'width': '100%', 'display': 'inline-block'}
     ),
@@ -43,9 +45,9 @@ layout = [
     # this align the slider to the right hand side
     html.Div([], style={'width': '49%', 'display': 'inline-block'},),
 
-    html.Div([
-        dcc.Dropdown(['xy', 'feat'], 'xy', id='demo-dropdown'),
-        ], style={'width': '49%', 'display': 'inline-block'},),
+    # html.Div([
+    #     dcc.Dropdown(['xy', 'feat'], 'xy', id='demo-dropdown'),
+    #     ], style={'width': '49%', 'display': 'inline-block'},),
 
 ]
 
@@ -57,165 +59,186 @@ layout = [
 # See https://community.plotly.com/t/bypassing-serialization-of-dash-graph-
 # objects-for-efficient-server-side-caching/59669 for more info.
 
+import json
+def mms_to_json(model):
+    serialize = json.dumps
+
+    data = {}
+    data['init_params'] = model.get_params()
+    data['model_params'] = mp = {}
+    for p in ('min_', 'scale_','data_min_', 'data_max_', 'data_range_'):
+        mp[p] = getattr(model, p).tolist()
+    return serialize(data)
+
+def mms_from_json(jstring):
+    data = json.loads(jstring)
+    model = skprep.MinMaxScaler(**data['init_params'])
+    for name, p in data['model_params'].items():
+        setattr(model, name, np.array(p))
+    return model
+
+
 @callback(
-    Output('my-numeric-input-1', 'min'),
-    Output('my-numeric-input-1', 'max'),
-    Output('my-numeric-input-1', 'value'),
-    Input('data-store', 'data'),
+    Output('button-stroke-id', 'min'),
+    Output('button-stroke-id', 'max'),
+    Output('button-stroke-id', 'value'),
+    Input('data-store-small', 'data'),
     )
-def update_rangeslider(jsonified_cleaned_data):
-    if jsonified_cleaned_data is not None:
-        data_df = format_from_json(jsonified_cleaned_data, source='/data')
-        stroke_id_list = np.array(list(set(data_df['stroke_id'])))
+def update_rangeslider(small_data):
+
+    print('update_rangeslider', small_data)
+
+    if small_data is not None:
+        stroke_id_list = np.array(small_data['stroke_id_list'])
         return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
     else:
         return 0, 10, 1
 
+
+import plotly.graph_objs as go
+import plotly.express as px
+import plotly.io
+
 import sklearn.preprocessing as skprep
 
 @callback(
-    Output('fig_all', 'figure'),
-    Input('data-store', 'data'),
-    Input('my-numeric-input-1', 'value'),
+    Output('data-store-sk', 'data'),
+    Output('data-store-fig_all', 'data'),
+    Input('data-store-file', 'data'),
     )
-def update_graph_all(jsonified_cleaned_data, value):
+def create_fig_all(jsonified_cleaned_data):
+    print("create_fig_all")
+    if jsonified_cleaned_data is not None:
+        data_df = format_from_json(jsonified_cleaned_data, source='/data')
+        mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1)).reshape(-1)
+        fig = px.scatter(x=data_df['x'], y=data_df['y'], opacity=0.05)
+        fig.update_traces(marker=dict(color='black', size=p_scaled))
+
+        mms_json = mms_to_json(mms)
+
+        return mms_json, plotly.io.to_json(fig)
+    else:
+        return None, None
+
+
+@callback(
+    Output('fig_all', 'figure'),
+    Input('data-store-file', 'data'),
+    Input('data-store-fig_all', 'data'),
+    Input('data-store-sk', 'data'),
+    Input('button-stroke-id', 'value'),
+    )
+def update_graph_all(jsonified_cleaned_data, fig_all_json, sk_data, value):
     """Create the graph for data all when the datastore is updated.
     """
 
     fig = go.Figure()
 
-    print("update_graph", value)
+    # print("update_graph", value, fig_all_json)
     if jsonified_cleaned_data is not None:
 
+        fig_a = plotly.io.from_json(fig_all_json)
+        mms = mms_from_json(sk_data)
+
         data_df = format_from_json(jsonified_cleaned_data, source='/data')
-
-        mms = skprep.MinMaxScaler(feature_range=(10, 80))
-        p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1))
-
-        scatter = go.Scatter(
-            x=data_df['x'], y=data_df['y'],
-            mode='markers',
-            marker={'size':p_scaled, 'color':'black'},
-            opacity=.1,
-            name='all data')
-        fig.add_trace(scatter)
-
         stroke_df = select(data_df, stroke_id=value)
+
         if stroke_df.shape[0] > 0:
-            p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1))
-            scatter = go.Scatter(
-                x=stroke_df['x'], y=stroke_df['y'], mode='markers',
-                marker={'size':p_scaled, 'color':'blue'},
-                opacity=1,
-                name='stroke '+str(value))
-            fig.add_trace(scatter)
+            p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
+            fig_b = px.scatter(x=stroke_df['x'], y=stroke_df['y'], opacity=1)
+            fig_b.update_traces(marker=dict(size=p_scaled))
 
-        fig.update_layout(
-            autosize=False,
-            width=1000,
-            height=1000,
-        )
-
+        fig = go.Figure(data=fig_a.data + fig_b.data)
+        fig.layout.update(showlegend=False,
+                          autosize=False,
+                          width=1000,
+                          height=1000,)
     return fig
 
 
 @callback(
     Output('fig_trace', 'figure'),
-    Input('data-store', 'data'),
-    Input('my-numeric-input-1', 'value'),
-    Input('demo-dropdown', 'value')
+    Input('data-store-file', 'data'),
+    Input('data-store-sk', 'data'),
+    Input('button-stroke-id', 'value'),
     )
-def update_graph_stroke(jsonified_cleaned_data, numinput_value, dropdown_value):
+def update_graph_stroke(jsonified_cleaned_data, sk_data, numinput_value):
     fig = go.Figure()
 
     if jsonified_cleaned_data is not None:
 
-        data_df = format_from_json(jsonified_cleaned_data, source='/data')
-        feat_df = format_from_json(jsonified_cleaned_data, source='/feat')
+        df = pd.read_json(jsonified_cleaned_data, orient='split')
+        df.columns = [0, 'source', 'data']
 
-        mms = skprep.MinMaxScaler(feature_range=(10, 80))
-        mms.fit(data_df['p'].values.reshape(-1,1))
+        data_df = format_from_df(df, source='/data')
+        feat_df = format_from_df(df, source='/feat')
+
+
+        # mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        # mms.fit(data_df['p'].values.reshape(-1,1))
+        mms = mms_from_json(sk_data)
 
         # select stroke
         stroke_i = select(data_df, stroke_id=numinput_value)
 
         if stroke_i.shape[0] > 0:
-
             stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
-
             if stroke_i_feat.shape[0] > 0:
-                # p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1))
-                # scatter = go.Scatter(
-                #     x=stroke_i['x'], y=stroke_i['y'], mode='markers', marker_symbol='x',
-                #     opacity=0.1, marker={'size':p_scaled, 'color':'black'},
-                #     )
-                # fig.add_trace(scatter)
-
-                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
+                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1)).reshape(-1)
                 colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
-                scatter = go.Scatter(
-                    x=stroke_i_feat['x'], y=stroke_i_feat['y'], mode='markers',
-                    marker={'size':p_scaled, 'color':colors},
-                    customdata=stroke_i_feat['segment_id'],
-                    hovertemplate="%{customdata}",
-                    opacity=1,
-                    name='stroke '+str(numinput_value))
-                fig.add_trace(scatter)
+                fig = px.scatter(x=stroke_i_feat['x'], y=stroke_i_feat['y'], color=colors, size=p_scaled)
+                # fig.update_traces(marker=dict(size=p_scaled))
 
-                fig.update_layout(
-                    autosize=False,
-                    width=1000,
-                    height=1000,
-                )
+        fig = go.Figure(data=fig.data)
+        # fig.layout.update(showlegend=False,
+        #                   autosize=False,
+        #                   width=1000,
+        #                   height=1000,)
+        fig.layout.update(
+            showlegend=False,
+            autosize=False,
+            width=500,
+            height=500,
+        )
 
     return fig
 
-
-
-
 @callback(
     Output('fig_speed', 'figure'),
-    Input('data-store', 'data'),
-    Input('my-numeric-input-1', 'value'),
-    Input('demo-dropdown', 'value')
+    Input('data-store-file', 'data'),
+    Input('button-stroke-id', 'value'),
     )
-def update_graph_speed(jsonified_cleaned_data, numinput_value, dropdown_value):
+def update_graph_speed(jsonified_cleaned_data, numinput_value):
     fig = go.Figure()
 
     if jsonified_cleaned_data is not None:
-        pass
 
-        data_df = format_from_json(jsonified_cleaned_data, source='/data')
-        feat_df = format_from_json(jsonified_cleaned_data, source='/feat')
+        df = pd.read_json(jsonified_cleaned_data, orient='split')
+        df.columns = [0, 'source', 'data']
 
-        mms = skprep.MinMaxScaler(feature_range=(10, 80))
-        mms.fit(data_df['p'].values.reshape(-1,1))
+        data_df = format_from_df(df, source='/data')
+        feat_df = format_from_df(df, source='/feat')
+
+        # mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        # mms.fit(data_df['p'].values.reshape(-1,1))
 
         # select stroke
         stroke_i = select(data_df, stroke_id=numinput_value)
-
         if stroke_i.shape[0] > 0:
-
             stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
-
             if stroke_i_feat.shape[0] > 0:
-
-                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
+                # p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
                 colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
-                scatter = go.Scatter(
-                    x=stroke_i_feat['ts'], y=100*stroke_i_feat['s'], mode='markers',
-                    marker={'size':p_scaled, 'color':colors},
-                    customdata=stroke_i_feat['segment_id'],
-                    hovertemplate="%{customdata}",
-                    opacity=1,
-                    name='stroke '+str(numinput_value))
-                fig.add_trace(scatter)
+                fig = px.scatter(x=stroke_i_feat['ts'], y=stroke_i_feat['s'],
+                                 color=colors)
 
-                fig.update_layout(
-                    autosize=False,
-                    width=1000,
-                    height=1000,
-                )
+        fig.update_layout(
+            showlegend=False,
+            autosize=False,
+            width=500,
+            height=500,
+        )
 
     return fig
 

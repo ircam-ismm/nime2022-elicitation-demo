@@ -11,6 +11,9 @@ dependencies:
 - ipywidgets
 - scikit-learn
 
+- conda-forge::opentsne
+- conda-forge::tslearn
+
 - pip: 
   - dash
   - dash-daq

@@ -9,21 +9,9 @@ import pandas as pd
 
 class OSCData():
     data = []
-    # feat = []
     def handle(self, *args):
         self.data.append(args)
         print(args)
-    # def handle_feat(self, *args):
-    #     self.feat.append(args)
-    #     print(args)
-
-# def print_volume_handler(unused_addr, args, volume):
-#     print("[{0}] ~ {1}".format(args[0], volume))
-
-# def print_compute_handler(unused_addr, args, volume):
-#     try:
-#         print("[{0}] ~ {1}".format(args[0], args[1](volume)))
-#     except ValueError: pass
 
 from datetime import datetime
 import os
@@ -42,22 +30,14 @@ if __name__ == "__main__":
     dispatcher.map("/data", SD.handle)
     dispatcher.map("/feat", SD.handle)
 
-    # dispatcher.map("/volume", print_volume_handler, "Volume")
-    # dispatcher.map("/logvolume", print_compute_handler, "Log volume", math.log)
-
     server = osc_server.ThreadingOSCUDPServer(
       (args.ip, args.port), dispatcher)
     print("Serving on {}".format(server.server_address))
 
-    now = datetime.now()
-
-
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        filename = format_filename("./data/user", "data", now)
+        filename = format_filename("./data/user", "data", datetime.now())
         data = pd.DataFrame(SD.data).to_csv(filename)
-        # filename = format_filename("./data/user", "feat", now)
-        # pd.DataFrame(SD.feat).to_csv(filename)
         print("k")
 
