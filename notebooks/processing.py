@@ -46,6 +46,7 @@ def format_feat(df):
                         columns=['key', 'segment_id', 's', 'da', 'min_dtw', 'min_dtw_id'])
     return data
 
+import scipy.signal as scsig
 
 class FeatureExtractor():
     """Computes features, e.g. radius of curvature k and norm of speed s.
@@ -66,6 +67,7 @@ class FeatureExtractor():
     def __call__(self, sample):
         """Input columns are t, x, y.
         """
+        sample = sample.copy()
         # 1st and 2nd derivatives of position
         savgol_dict = {'window_length':self.wl, 'polyorder':self.po, 'mode':'nearest'}
         for col in sample.columns[1:]:
@@ -87,3 +89,34 @@ class FeatureExtractor():
         sample['da'] = scsig.savgol_filter(sample['a'], deriv=1, **savgol_dict) * 10
 
         return sample[self.dims]
+
+import detecta
+class SegmentNp():
+    """Segment a stroke as numpy array.
+    Detects peaks on the last row, and append the last two rows.
+    Return a list of segments.
+    """
+    def __init__(self, mpd=10, mph=1, col_seg=-1, col_ret=slice(-2, None)):
+        self.mdp = mpd
+        self.mph = mph
+        self.col_seg = col_seg
+        self.col_ret = col_ret
+
+    def __call__(self, sample):
+        segments = []
+        peaks = detecta.detect_peaks(sample[:, self.col_seg], 
+                                     mpd=self.mdp, mph=self.mph, valley=True)
+
+        if peaks.size == 0:
+            segments.append(sample[:, self.col_ret])
+        else:
+            peaks_ext = np.r_[0, peaks, sample.shape[0]-1]
+            for peak_pair in zip(peaks_ext, peaks_ext[1:]):
+                segment = sample[slice(*peak_pair), self.col_ret]
+                segments.append(segment)
+
+                # if self.with_trans:
+                #     trans = peak_pair[1]
+                #     segment = g[slice(trans-5, trans+5), self.col_ret]
+                #     segments.append(segment)
+        return segments

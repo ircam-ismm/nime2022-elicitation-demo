@@ -14,7 +14,10 @@ dependencies:
 - conda-forge::opentsne
 - conda-forge::tslearn
 
+- duartexyz::detecta
+
 - pip: 
   - dash
   - dash-daq
   - dash-bootstrap-components
+
