@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 162.0, 293.0, 1318.0, 999.0 ],
+		"rect" : [ 422.0, 143.0, 1318.0, 999.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -900,7 +900,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 162.0, 319.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -1300,8 +1300,6 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
-										"node_bin_path" : "",
-										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -2355,7 +2353,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 422.0, 169.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -2619,7 +2617,7 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
-										"node_bin_path" : "",
+										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,

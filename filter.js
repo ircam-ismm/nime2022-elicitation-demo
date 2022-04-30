@@ -133,9 +133,27 @@ function lowpass(sample) {
 // perform SG filtering in pipo and get back results
 // receives the derivatives of xyp
 var stroke = [];
-var speeds = [];
+var stroke_speed = [];
+var stroke_angle = [];
+var stroke_dangle = [];
+
+var cur_segment_len = 0;
+var last_segment_end = 0;
+
 var SPEED_THRESHOLD = 1.0;
+var SG_WINDOW_SIZE = 5;
+
+var sg_options = {
+    windowSize: SG_WINDOW_SIZE,
+    derivative: 1,
+    pad: 'pre',
+    padValue: 'replicate',
+};
+
+
 Max.addHandler("segment", async (...sample) => {
+
+    cur_segment_len += 1;
 
     // Max.post("IN SEGMENT", sample);
 
@@ -143,24 +161,37 @@ Max.addHandler("segment", async (...sample) => {
     var xyp = sample.slice(-3);
 
     stroke.push(sample);
-    var speed = Math.sqrt(Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2));
-    speed = 100 * speed;
-    speeds.push(speed);
+
+
+    var speed = 100*Math.sqrt(Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2));
+    stroke_speed.push(speed);
+
+    var angle = Math.atan2(xyp[1], xyp[0]);
+    stroke_angle.push(angle);
+    // unwrap
+    // derivate - two sample late
+    var dangle = 0;
+    if (stroke.length > SG_WINDOW_SIZE) {
+        dangle = SG(stroke_angle.slice(-5), 1, sg_options).slice(-3,-2)[0];
+    }
+    stroke_dangle.push(dangle);
+
 
     Max.post("segment: ", stroke.length, speed);
-
 
     // Max.post("speed:", speed);
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
-        var last_3 = speeds.slice(-3);
+        var last_3 = stroke_speed.slice(-3);
         // Max.post("last_3:", last_3, last_3[0] > last_3[1], last_3[2] > last_3[1]);
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
             Max.post("min: ", stroke.length, last_3[1]);
-            if ((last_3[1] < SPEED_THRESHOLD) || (stroke.length > 50)) {
+            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (stroke.length > 50)) {
                 Max.post("SEGMENT !!!:", segment_id, stroke.length);
                 new_segment();
+                last_segment_end = cur_segment_len;
+                cur_segment_len = 0;
             }
         }
     }
@@ -172,6 +203,9 @@ Max.addHandler("segment", async (...sample) => {
             obj = {};
         }
         obj['xyp_sg'] = xyp;
+        obj['s'] = speed;
+        obj['da'] = dangle;
+        obj['segment_id'] = segment_id;
         var res = await Max.outlet("logging_data", JSON.stringify(obj));
     }
 
@@ -182,24 +216,19 @@ var segment_id = 0;
 async function new_segment() {
     // individual segment within a stroke
     segment_id += 1;
-    segment = stroke.splice(0, stroke.length-1);
-    compute_features(segment);
+    segment = stroke.slice(last_segment_end, cur_segment_len);
+    // compute_features(segment);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-var options = {
-    derivative: 1,
-    pad: 'post',
-    padValue: 'replicate',
-};
 
 async function compute_features(segment) {
     // segment : [[t, x, y, p],...]
 
 
-    var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
-    var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
-    var dA = SG(angle, 1, options);
+    // var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
+    // var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
+    // var dA = SG(angle, 1, options);
     // ADD pressure!!
     // concat
     var features = speed.map(function(num, idx) {return [num, dA[idx]]})

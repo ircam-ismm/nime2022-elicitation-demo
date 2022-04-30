@@ -132,8 +132,8 @@ def embed(affinity_mat, n_iter_0=250, n_iter_1=750):
     )
 
     # default parameters on the 2-stage process
-    embedding_train_1 = embedding_train.optimize(n_iter=250, exaggeration=12, momentum=0.5)
-    embedding_train_2 = embedding_train_1.optimize(n_iter=750, momentum=0.8)
+    embedding_train_1 = embedding_train.optimize(n_iter=250, exaggeration=12, momentum=0.5, verbose=3)
+    embedding_train_2 = embedding_train_1.optimize(n_iter=750, momentum=0.8, verbose=3)
 
     return embedding_train_2
 
