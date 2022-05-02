@@ -7,10 +7,10 @@ tab10 = sns.color_palette('tab10')
 ################################################################################
 # data file processing
 
-def format_from_json(jsonified_cleaned_data, source='/data'):
-    df = pd.read_json(jsonified_cleaned_data, orient='split')
+def format_from_json(json, source='/data'):
+    df = pd.read_json(json, orient='split')
     df.columns = [0, 'source', 'data']
-    return format_from_df(df, source=source)
+    return format_from_df(df)
 
 def format_from_df(df,  source='/data'):
     select_df = select(df, source=source)
@@ -32,41 +32,48 @@ def format_data(df):
         t0 = row['timestamp0']
         ts = row['timestamp']
         stroke_id = row['stroke_id']
+        segment_id = row['segment_id']
 
         x, y, p = row.get('xyp', default_value)
         x_, y_, p_ = row.get('rel_xyp', default_value)
         x0, y0, p0 = row.get('rel_xyp_lp', default_value)
         x1, y1, p1 = row.get('xyp_sg', default_value)
-
-        new_row = [key, t0, ts, stroke_id, x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1]
+        s = row['s']
+        da = row['da']
+        da = da[0] if isinstance(da, (list,)) else da
+    
+        new_row = [key, t0, ts, stroke_id, segment_id, 
+                   x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1, s, da]
         new_rows.append(new_row)
 
     data = pd.DataFrame(data=new_rows,
-                        columns=['key', 't0', 'ts', 'stroke_id',
+                        columns=['key', 't0', 'ts',
+                                 'stroke_id', 'segment_id',
                                  'x', 'y', 'p', 'x_', 'y_', 'p_',
-                                 'x0', 'y0', 'p0', 'x1', 'y1', 'p1']
+                                 'x0', 'y0', 'p0', 'x1', 'y1', 'p1',
+                                 's', 'da']
                        )
     return data
 
-def format_feat(df):
-    # feat = feat['1'].str.replace('null', '0')??
-    new_rows = []
-    for i, row in df.iterrows():
-        row = eval(row['data'])
-        key = row['sample_key']
-        segment_id = row['segment_id']
-        s = row['s']
-        # in case da does not exist
-        da = row.get('da', 0)
-        min_dtw = row.get('min_dtw', -1)
-        min_dtw_id = row.get('min_dtw_id', -1)
+# def format_feat(df):
+#     # feat = feat['1'].str.replace('null', '0')??
+#     new_rows = []
+#     for i, row in df.iterrows():
+#         row = eval(row['data'])
+#         key = row['sample_key']
+#         segment_id = row['segment_id']
+#         s = row['s']
+#         # in case da does not exist
+#         da = row.get('da', 0)
+#         min_dtw = row.get('min_dtw', -1)
+#         min_dtw_id = row.get('min_dtw_id', -1)
 
-        new_row = [key, segment_id, s, da, min_dtw, min_dtw_id]
-        new_rows.append(new_row)
+#         new_row = [key, segment_id, s, da, min_dtw, min_dtw_id]
+#         new_rows.append(new_row)
 
-    data = pd.DataFrame(data=new_rows,
-                        columns=['key', 'segment_id', 's', 'da', 'min_dtw', 'min_dtw_id'])
-    return data
+#     data = pd.DataFrame(data=new_rows,
+#                         columns=['key', 'segment_id', 's', 'da', 'min_dtw', 'min_dtw_id'])
+#     return data
 
 
 ################################################################################

@@ -168,33 +168,20 @@ def update_graph_stroke(jsonified_cleaned_data, sk_data, numinput_value):
 
     if jsonified_cleaned_data is not None:
 
-        df = pd.read_json(jsonified_cleaned_data, orient='split')
-        df.columns = [0, 'source', 'data']
-
-        data_df = format_from_df(df, source='/data')
-        feat_df = format_from_df(df, source='/feat')
-
-
-        # mms = skprep.MinMaxScaler(feature_range=(10, 80))
-        # mms.fit(data_df['p'].values.reshape(-1,1))
+        df = format_from_json(jsonified_cleaned_data)
         mms = mms_from_json(sk_data)
 
         # select stroke
-        stroke_i = select(data_df, stroke_id=numinput_value)
+        stroke_i = select(df, stroke_id=numinput_value)
 
         if stroke_i.shape[0] > 0:
-            stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
-            if stroke_i_feat.shape[0] > 0:
-                p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1)).reshape(-1)
-                colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
-                fig = px.scatter(x=stroke_i_feat['x'], y=stroke_i_feat['y'], color=colors, size=p_scaled)
-                # fig.update_traces(marker=dict(size=p_scaled))
+            # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
+            # if stroke_i_feat.shape[0] > 0:
+            p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
+            colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+            fig = px.scatter(x=stroke_i['x'], y=stroke_i['y'], color=colors, size=p_scaled)
 
         fig = go.Figure(data=fig.data)
-        # fig.layout.update(showlegend=False,
-        #                   autosize=False,
-        #                   width=1000,
-        #                   height=1000,)
         fig.layout.update(
             showlegend=False,
             autosize=False,
@@ -214,25 +201,18 @@ def update_graph_speed(jsonified_cleaned_data, numinput_value):
 
     if jsonified_cleaned_data is not None:
 
-        df = pd.read_json(jsonified_cleaned_data, orient='split')
-        df.columns = [0, 'source', 'data']
-
-        data_df = format_from_df(df, source='/data')
-        feat_df = format_from_df(df, source='/feat')
-
-        # mms = skprep.MinMaxScaler(feature_range=(10, 80))
-        # mms.fit(data_df['p'].values.reshape(-1,1))
+        df = format_from_json(jsonified_cleaned_data)
 
         # select stroke
-        stroke_i = select(data_df, stroke_id=numinput_value)
-        if stroke_i.shape[0] > 0:
-            stroke_i_feat = stroke_i.join(feat_df.set_index('key'), on='key').dropna()
-            if stroke_i_feat.shape[0] > 0:
-                # p_scaled = mms.transform(stroke_i_feat['p'].values.reshape(-1,1))
-                colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i_feat['segment_id']]
-                fig = px.scatter(x=stroke_i_feat['ts'], y=stroke_i_feat['s'],
-                                 color=colors)
+        stroke_i = select(df, stroke_id=numinput_value)
 
+        if stroke_i.shape[0] > 0:
+            # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
+            # if stroke_i_feat.shape[0] > 0:
+            colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+            fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors)
+
+        fig = go.Figure(data=fig.data)
         fig.update_layout(
             showlegend=False,
             autosize=False,
