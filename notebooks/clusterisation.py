@@ -107,7 +107,7 @@ def compute_similarity_matrix(data, normalise=True):
     # https://github.com/rtavenar/tslearn/pull/128#discussion_r314978479
     matrix = np.zeros((len(data), len(data)))
     indices = np.triu_indices(len(data), k=1, m=len(data))
-    matrix[indices] = Parallel(n_jobs=8, prefer="processes", verbose=1)(
+    matrix[indices] = Parallel(n_jobs=8, prefer="processes", verbose=0)(
                                delayed(metrics.dtw)(data[i], data[j],)
                                for i, j in zip(*indices))
     sm = matrix + matrix.T

@@ -1,9 +1,13 @@
+import logging
+
 import numpy as np
 import pandas as pd
 
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash import callback
+from dash.exceptions import PreventUpdate
+
 import dash_daq as daq
 import dash_bootstrap_components as dbc
 
@@ -13,42 +17,38 @@ from utils import format_from_json, format_from_df, tab10, select
 ################################################################################
 # LAYOUT
 layout = [
-    # DATA
-    dcc.Store(id='data-store-fig_all'),
-    dcc.Store(id='data-store-sk'),
-
     # FIGURES
-    html.Div([
-        html.H5("Select stroke:"),
-        daq.NumericInput(id='button-stroke-id',value=0, min=0, max=1e3),
+    html.Div(id='processing-layout', children=[
+
+        html.Div([
+            html.H5("Select stroke:"),
+            daq.NumericInput(id='button-stroke-id',value=0, min=0, max=1e3),
+        ],
+        style={'width': '100%', 'display': 'inline-block'}
+        ),
+
+        html.Div([
+            dbc.Col([
+                dcc.Graph(id="fig_all",),
+                ]),
+            ],
+            style={'width': '49%', 'display': 'inline-block'},
+        ),
+
+        html.Div([
+            dbc.Col([
+                dcc.Graph(id="fig_trace",),
+                dcc.Graph(id="fig_speed",),
+                ]),
+            ],
+            style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
+        ),
+
+        # this align the slider to the right hand side
+        html.Div([], style={'width': '49%', 'display': 'inline-block'},),
     ],
-    style={'width': '100%', 'display': 'inline-block'}
-    ),
-
-    html.Div([
-        dbc.Col([
-            dcc.Graph(id="fig_all",),
-            ]),
-        ],
-        style={'width': '49%', 'display': 'inline-block'},
-    ),
-    
-    html.Div([
-        dbc.Col([
-            dcc.Graph(id="fig_trace",),
-            dcc.Graph(id="fig_speed",),
-            ]),
-        ],
-        style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
-    ),
-
-    # this align the slider to the right hand side
-    html.Div([], style={'width': '49%', 'display': 'inline-block'},),
-
-    # html.Div([
-    #     dcc.Dropdown(['xy', 'feat'], 'xy', id='demo-dropdown'),
-    #     ], style={'width': '49%', 'display': 'inline-block'},),
-
+    style= {'display': 'none'}
+    )
 ]
 
 
@@ -85,14 +85,16 @@ def mms_from_json(jstring):
     Input('data-store-small', 'data'),
     )
 def update_rangeslider(small_data):
-
     print('update_rangeslider', small_data)
 
-    if small_data is not None:
-        stroke_id_list = np.array(small_data['stroke_id_list'])
-        return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
-    else:
-        return 0, 10, 1
+    if small_data == None:
+        raise PreventUpdate()
+
+
+    stroke_id_list = np.array(small_data['stroke_id_list'])
+    return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
+    # else:
+    #     return 0, 10, 1
 
 
 import plotly.graph_objs as go
@@ -107,19 +109,31 @@ import sklearn.preprocessing as skprep
     Input('data-store-file', 'data'),
     )
 def create_fig_all(jsonified_cleaned_data):
-    print("create_fig_all")
-    if jsonified_cleaned_data is not None:
-        data_df = format_from_json(jsonified_cleaned_data, source='/data')
-        mms = skprep.MinMaxScaler(feature_range=(10, 80))
-        p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1)).reshape(-1)
-        fig = px.scatter(x=data_df['x'], y=data_df['y'], opacity=0.05)
-        fig.update_traces(marker=dict(color='black', size=p_scaled))
+    print("create_fig_all - flag", jsonified_cleaned_data==None)
 
-        mms_json = mms_to_json(mms)
-
-        return mms_json, plotly.io.to_json(fig)
-    else:
+    if jsonified_cleaned_data == None:
         return None, None
+        # raise PreventUpdate()
+
+    # print(jsonified_cleaned_data)
+
+    logging.info('#### create fig - start')
+
+    data_df = format_from_json(jsonified_cleaned_data, source='/data')
+    print('create_fig_all - data', data_df.head())
+
+    mms = skprep.MinMaxScaler(feature_range=(10, 80))
+
+    p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1)).reshape(-1)
+
+    fig = px.scatter(x=data_df['x'], y=data_df['y'], opacity=0.05)
+    fig.update_traces(marker=dict(color='black', size=p_scaled))
+
+    logging.info('#### create fig - end')
+
+    mms_json = mms_to_json(mms)
+
+    return mms_json, plotly.io.to_json(fig)
 
 
 @callback(
@@ -133,27 +147,28 @@ def update_graph_all(jsonified_cleaned_data, fig_all_json, sk_data, value):
     """Create the graph for data all when the datastore is updated.
     """
 
-    fig = go.Figure()
+    if jsonified_cleaned_data == None or fig_all_json == None or sk_data == None:
+        return go.Figure()
 
     # print("update_graph", value, fig_all_json)
-    if jsonified_cleaned_data is not None:
+    # if
 
-        fig_a = plotly.io.from_json(fig_all_json)
-        mms = mms_from_json(sk_data)
+    fig_a = plotly.io.from_json(fig_all_json)
+    mms = mms_from_json(sk_data)
 
-        data_df = format_from_json(jsonified_cleaned_data, source='/data')
-        stroke_df = select(data_df, stroke_id=value)
+    data_df = format_from_json(jsonified_cleaned_data, source='/data')
+    stroke_df = select(data_df, stroke_id=value)
 
-        if stroke_df.shape[0] > 0:
-            p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
-            fig_b = px.scatter(x=stroke_df['x'], y=stroke_df['y'], opacity=1)
-            fig_b.update_traces(marker=dict(size=p_scaled))
+    if stroke_df.shape[0] > 0:
+        p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
+        fig_b = px.scatter(x=stroke_df['x'], y=stroke_df['y'], opacity=1)
+        fig_b.update_traces(marker=dict(size=p_scaled))
 
-        fig = go.Figure(data=fig_a.data + fig_b.data)
-        fig.layout.update(showlegend=False,
-                          autosize=False,
-                          width=1000,
-                          height=1000,)
+    fig = go.Figure(data=fig_a.data + fig_b.data)
+    fig.layout.update(showlegend=False,
+                      autosize=False,
+                      width=1000,
+                      height=1000,)
     return fig
 
 
@@ -164,30 +179,34 @@ def update_graph_all(jsonified_cleaned_data, fig_all_json, sk_data, value):
     Input('button-stroke-id', 'value'),
     )
 def update_graph_stroke(jsonified_cleaned_data, sk_data, numinput_value):
-    fig = go.Figure()
+    # fig = go.Figure()
+    print('update_graph_stroke', jsonified_cleaned_data==None, sk_data)
 
-    if jsonified_cleaned_data is not None:
+    if jsonified_cleaned_data == None or sk_data == None:
+        raise PreventUpdate()
 
-        df = format_from_json(jsonified_cleaned_data)
-        mms = mms_from_json(sk_data)
+    df = format_from_json(jsonified_cleaned_data)
+    print('update_graph_stroke', df.head())
 
-        # select stroke
-        stroke_i = select(df, stroke_id=numinput_value)
+    mms = mms_from_json(sk_data)
 
-        if stroke_i.shape[0] > 0:
-            # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
-            # if stroke_i_feat.shape[0] > 0:
-            p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
-            colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-            fig = px.scatter(x=stroke_i['x'], y=stroke_i['y'], color=colors, size=p_scaled)
+    # select stroke
+    stroke_i = select(df, stroke_id=numinput_value)
 
-        fig = go.Figure(data=fig.data)
-        fig.layout.update(
-            showlegend=False,
-            autosize=False,
-            width=500,
-            height=500,
-        )
+    if stroke_i.shape[0] > 0:
+        # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
+        # if stroke_i_feat.shape[0] > 0:
+        p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
+        colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+        fig = px.scatter(x=stroke_i['x'], y=stroke_i['y'], color=colors, size=p_scaled)
+
+    fig = go.Figure(data=fig.data)
+    fig.layout.update(
+        showlegend=False,
+        autosize=False,
+        width=500,
+        height=500,
+    )
 
     return fig
 
@@ -197,28 +216,33 @@ def update_graph_stroke(jsonified_cleaned_data, sk_data, numinput_value):
     Input('button-stroke-id', 'value'),
     )
 def update_graph_speed(jsonified_cleaned_data, numinput_value):
-    fig = go.Figure()
 
-    if jsonified_cleaned_data is not None:
+    print('update_graph_speed', jsonified_cleaned_data==None, numinput_value)
 
-        df = format_from_json(jsonified_cleaned_data)
+    if jsonified_cleaned_data == None:
+        raise PreventUpdate()
 
-        # select stroke
-        stroke_i = select(df, stroke_id=numinput_value)
+    df = format_from_json(jsonified_cleaned_data)
+    print('update_graph_speed', numinput_value, df.head())
 
-        if stroke_i.shape[0] > 0:
-            # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
-            # if stroke_i_feat.shape[0] > 0:
-            colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-            fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors)
+    # select stroke
+    stroke_i = select(df, stroke_id=numinput_value)
 
-        fig = go.Figure(data=fig.data)
-        fig.update_layout(
-            showlegend=False,
-            autosize=False,
-            width=500,
-            height=500,
-        )
+    print("graph SPEED", stroke_i.shape)
+
+    if stroke_i.shape[0] > 0:
+        # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
+        # if stroke_i_feat.shape[0] > 0:
+        colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+        fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors)
+
+    fig = go.Figure(data=fig.data)
+    fig.update_layout(
+        showlegend=False,
+        autosize=False,
+        width=500,
+        height=500,
+    )
 
     return fig
 

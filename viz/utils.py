@@ -10,7 +10,7 @@ tab10 = sns.color_palette('tab10')
 def format_from_json(json, source='/data'):
     df = pd.read_json(json, orient='split')
     df.columns = [0, 'source', 'data']
-    return format_from_df(df)
+    return format_from_df(df, source=source)
 
 def format_from_df(df,  source='/data'):
     select_df = select(df, source=source)

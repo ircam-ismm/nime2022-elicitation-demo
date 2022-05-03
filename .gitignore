@@ -6,9 +6,11 @@
 data/test
 
 # js test
-test_fili
 jstest
 
 # js files
-node_modules
-package*
+max/node_modules
+max/package*
+
+# viz cache
+viz/cache

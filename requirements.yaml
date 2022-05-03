@@ -10,14 +10,17 @@ dependencies:
 - seaborn
 - ipywidgets
 - scikit-learn
+- tqdm
 
 - conda-forge::opentsne
 - conda-forge::tslearn
 
 - duartexyz::detecta
 
-- pip: 
+- pip:
+  - diskcache
   - dash
+  - "dash[diskcache]"
   - dash-daq
   - dash-bootstrap-components
 

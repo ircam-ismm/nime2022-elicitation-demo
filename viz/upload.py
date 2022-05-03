@@ -16,11 +16,6 @@ from utils import format_from_json, format_from_df
 ################################################################################
 # LAYOUT
 layout = [
-
-    # data
-    dcc.Store(id='data-store-file'),
-    dcc.Store(id='data-store-small'),
-
     # io
     dcc.Upload(
         id='upload-data',
@@ -72,6 +67,9 @@ def upload_data(list_of_contents, list_of_names, list_of_dates):
 ################################################################################
 # UTILS
 def parse_contents(contents, filename, date):
+
+    print("parse content")
+
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)

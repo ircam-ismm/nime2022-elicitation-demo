@@ -1,30 +1,157 @@
 from dash import dcc, html
 from dash import callback
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
 import dash_bootstrap_components as dbc
 
+from utils import format_from_json, format_from_df
+
+import plotly.graph_objs as go
+import plotly.express as px
+
 ################################################################################
 # LAYOUT
 layout = [
-    # embedding
-    html.Button('Embed', id='button-embed', n_clicks=0),
-    # dbc.Progress(id='progress-bar-embed', value=25),
-    dbc.Progress(id='progress', value=25),
-    dcc.Interval(id="progress-interval", n_intervals=0, interval=500),
+    html.Div(id='analysis-layout', children=[
+
+
+        html.Div([
+            html.Div(id='progress'),
+            html.Button(id='button_id', children='Run Job!'),
+        ],
+        style={'width': '100%', 'display': 'inline-block'}
+        ),
+
+        html.Div([
+            # dbc.Col([
+                dcc.Graph(id="fig_embedding",),
+                # ]),
+            ],
+            style={'width': '49%', 'display': 'inline-block'},
+        ),
+
+        html.Div([
+            # dbc.Col([
+                dcc.Graph(id="fig_strokes",),
+                # dcc.Graph(id="fig_speed",),
+                # ]),
+            ],
+            style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
+        ),
+
+
+        html.Div(id='tmp'),
+
+        ],
+
+        style= {'display': 'block'}
+        )
     ]
 
+
+
+
+import logging
+
+import embedding
+from dash.exceptions import PreventUpdate
+
+import time
 @callback(
-    [Output("progress", "value"), Output("progress", "label")],
-    [Input("progress-interval", "n_intervals")],
+    output=Output('data-store-embedding', 'data'),
+    inputs=[
+        Input('button_id', 'n_clicks'),
+        State('data-store-file', 'data')
+        ],
+    # running=[
+    #     (Output('button_id', 'disabled'), True, False),
+    #     ],
 )
-def update_progress(n):
-    # check progress of some background process, in this example we'll just
-    # use n_intervals constrained to be in 0-100
-    progress = min(n % 110, 100)
-    # only add text after 5% progress to ensure text isn't squashed too much
-    return progress, f"{progress} %" if progress >= 5 else ""
+def embed_long_callback(n_clicks, jsonified_cleaned_data):
+    print('embed_long_callback', n_clicks, jsonified_cleaned_data==None)
+
+    if jsonified_cleaned_data == None:
+        return None
+
+    df = format_from_json(jsonified_cleaned_data)
+    segments = [grp[['s', 'da']].values for i, grp in df.groupby('segment_id')]
+
+    logging.info("cluster start")
+    sm_seg = embedding.compute_similarity_matrix(segments)
+    logging.info("cluster done")
+
+    logging.info("embed start")
+    emb_seg = embedding.tsne_embed(sm_seg, perplexity=30)
+    logging.info("embed done")
+
+    embed_json = pd.DataFrame(emb_seg).to_json(date_format='iso', orient='split')
+
+    return embed_json
+
+
+import pandas as pd
+
+@callback(
+    Output('fig_embedding', 'figure'),
+    Input('data-store-embedding', 'data'),
+    )
+def create_fig_embedding(json):
+
+    if json == None:
+        return go.Figure()
+
+    df = pd.read_json(json, orient='split')
+    print('create_fig_embedding', df.values)
+
+    fig = px.scatter(x=df.values[:, 0], y=df.values[:, 1])
+
+    fig = go.Figure(data=fig.data)
+    fig.layout.update(showlegend=False,
+                      autosize=False,
+                      width=1000,
+                      height=1000,)
+
+    print(fig)
+
+    return fig
+
+
+import json
+
+@callback(
+    Output('tmp', 'children'),
+    Input('fig_embedding', 'selectedData'),
+    )
+def cb(selected):
+    print(selected)
+    return json.dumps(data)
+
+
+
+# if __name__ == "__main__":
+#     app.run_server(debug=True)
+
+# from flask_caching import Cache
+
+# Create a server side resource.
+# fsc = FileSystemCache("cache_dir")
+# fsc.set("progress", None)
+
+
+
+
+# @callback(
+#     Output("progress", "value"), Output("progress", "label"),
+#     Input('button-embed', 'n_clicks'),
+#     # [Input("progress-interval", "n_intervals")],
+# )
+# def update_progress(n):
+#     # check progress of some background process, in this example we'll just
+#     # use n_intervals constrained to be in 0-100
+#     progress = min(n % 110, 100)
+#     # only add text after 5% progress to ensure text isn't squashed too much
+#     return progress, f"{progress} %" if progress >= 5 else ""
 
 
 # @callback(
