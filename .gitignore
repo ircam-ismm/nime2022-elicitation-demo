@@ -14,3 +14,4 @@ max/package*
 
 # viz cache
 viz/cache
+viz/file_system_store

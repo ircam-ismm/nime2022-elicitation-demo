@@ -20,7 +20,8 @@ dependencies:
 - pip:
   - diskcache
   - dash
-  - "dash[diskcache]"
+  - dash_extensions
+  # - "dash[diskcache]"
   - dash-daq
   - dash-bootstrap-components
 

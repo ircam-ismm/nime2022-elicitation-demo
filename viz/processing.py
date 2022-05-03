@@ -1,15 +1,24 @@
 import logging
+import json
 
 import numpy as np
 import pandas as pd
 
-from dash import dcc, html
-from dash.dependencies import Input, Output
-from dash import callback
+import sklearn.preprocessing as skprep
+
+from dash_extensions.enrich import Output, Input, State
+from dash_extensions.enrich import html, dcc
+from dash_extensions.enrich import DashProxy, ServersideOutput, ServersideOutputTransform
+from dash_extensions.enrich import callback
 from dash.exceptions import PreventUpdate
 
+import dash
 import dash_daq as daq
 import dash_bootstrap_components as dbc
+
+import plotly.graph_objs as go
+import plotly.express as px
+import plotly.io
 
 from utils import format_from_json, format_from_df, tab10, select
 
@@ -53,87 +62,35 @@ layout = [
 
 
 ################################################################################
-# CALLBACK
-# Some graphs can be long to create due the amount of data points involved. We
-# therefore cache the figure when possible for background data.
-# See https://community.plotly.com/t/bypassing-serialization-of-dash-graph-
-# objects-for-efficient-server-side-caching/59669 for more info.
-
-import json
-def mms_to_json(model):
-    serialize = json.dumps
-
-    data = {}
-    data['init_params'] = model.get_params()
-    data['model_params'] = mp = {}
-    for p in ('min_', 'scale_','data_min_', 'data_max_', 'data_range_'):
-        mp[p] = getattr(model, p).tolist()
-    return serialize(data)
-
-def mms_from_json(jstring):
-    data = json.loads(jstring)
-    model = skprep.MinMaxScaler(**data['init_params'])
-    for name, p in data['model_params'].items():
-        setattr(model, name, np.array(p))
-    return model
-
-
+# CALLBACKS
 @callback(
     Output('button-stroke-id', 'min'),
     Output('button-stroke-id', 'max'),
     Output('button-stroke-id', 'value'),
     Input('data-store-small', 'data'),
+    prevent_initial_call=True
     )
 def update_rangeslider(small_data):
-    print('update_rangeslider', small_data)
-
-    if small_data == None:
-        raise PreventUpdate()
-
-
     stroke_id_list = np.array(small_data['stroke_id_list'])
     return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
-    # else:
-    #     return 0, 10, 1
 
-
-import plotly.graph_objs as go
-import plotly.express as px
-import plotly.io
-
-import sklearn.preprocessing as skprep
 
 @callback(
     Output('data-store-sk', 'data'),
-    Output('data-store-fig_all', 'data'),
+    ServersideOutput('data-store-fig_all', 'data'),
     Input('data-store-file', 'data'),
+    prevent_initial_call=True,
     )
-def create_fig_all(jsonified_cleaned_data):
-    print("create_fig_all - flag", jsonified_cleaned_data==None)
-
-    if jsonified_cleaned_data == None:
-        return None, None
-        # raise PreventUpdate()
-
-    # print(jsonified_cleaned_data)
-
-    logging.info('#### create fig - start')
-
-    data_df = format_from_json(jsonified_cleaned_data, source='/data')
-    print('create_fig_all - data', data_df.head())
-
+def create_fig_all(df):
     mms = skprep.MinMaxScaler(feature_range=(10, 80))
+    p_scaled = mms.fit_transform(df['p'].values.reshape(-1,1)).reshape(-1)
 
-    p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1)).reshape(-1)
-
-    fig = px.scatter(x=data_df['x'], y=data_df['y'], opacity=0.05)
+    fig = px.scatter(x=df['x'], y=df['y'], opacity=0.05)
     fig.update_traces(marker=dict(color='black', size=p_scaled))
-
-    logging.info('#### create fig - end')
 
     mms_json = mms_to_json(mms)
 
-    return mms_json, plotly.io.to_json(fig)
+    return mms_json, fig
 
 
 @callback(
@@ -142,21 +99,13 @@ def create_fig_all(jsonified_cleaned_data):
     Input('data-store-fig_all', 'data'),
     Input('data-store-sk', 'data'),
     Input('button-stroke-id', 'value'),
+    prevent_initial_call=True,
     )
-def update_graph_all(jsonified_cleaned_data, fig_all_json, sk_data, value):
-    """Create the graph for data all when the datastore is updated.
-    """
+def update_graph_all(data_df, fig_a, sk_data, value):
+    if sk_data == None:
+        return dash.no_update
 
-    if jsonified_cleaned_data == None or fig_all_json == None or sk_data == None:
-        return go.Figure()
-
-    # print("update_graph", value, fig_all_json)
-    # if
-
-    fig_a = plotly.io.from_json(fig_all_json)
     mms = mms_from_json(sk_data)
-
-    data_df = format_from_json(jsonified_cleaned_data, source='/data')
     stroke_df = select(data_df, stroke_id=value)
 
     if stroke_df.shape[0] > 0:
@@ -178,24 +127,14 @@ def update_graph_all(jsonified_cleaned_data, fig_all_json, sk_data, value):
     Input('data-store-sk', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def update_graph_stroke(jsonified_cleaned_data, sk_data, numinput_value):
-    # fig = go.Figure()
-    print('update_graph_stroke', jsonified_cleaned_data==None, sk_data)
+def update_graph_stroke(df, sk_data, numinput_value):
+    if sk_data is None:
+        return dash.no_update
 
-    if jsonified_cleaned_data == None or sk_data == None:
-        raise PreventUpdate()
-
-    df = format_from_json(jsonified_cleaned_data)
-    print('update_graph_stroke', df.head())
-
-    mms = mms_from_json(sk_data)
-
-    # select stroke
     stroke_i = select(df, stroke_id=numinput_value)
 
     if stroke_i.shape[0] > 0:
-        # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
-        # if stroke_i_feat.shape[0] > 0:
+        mms = mms_from_json(sk_data)
         p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
         colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
         fig = px.scatter(x=stroke_i['x'], y=stroke_i['y'], color=colors, size=p_scaled)
@@ -215,24 +154,13 @@ def update_graph_stroke(jsonified_cleaned_data, sk_data, numinput_value):
     Input('data-store-file', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def update_graph_speed(jsonified_cleaned_data, numinput_value):
+def update_graph_speed(df, numinput_value):
+    if df is None:
+        return dash.no_update
 
-    print('update_graph_speed', jsonified_cleaned_data==None, numinput_value)
-
-    if jsonified_cleaned_data == None:
-        raise PreventUpdate()
-
-    df = format_from_json(jsonified_cleaned_data)
-    print('update_graph_speed', numinput_value, df.head())
-
-    # select stroke
     stroke_i = select(df, stroke_id=numinput_value)
 
-    print("graph SPEED", stroke_i.shape)
-
     if stroke_i.shape[0] > 0:
-        # stroke_i_feat = stroke_i.join(df.set_index('key'), on='key').dropna()
-        # if stroke_i_feat.shape[0] > 0:
         colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
         fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors)
 
@@ -247,6 +175,22 @@ def update_graph_speed(jsonified_cleaned_data, numinput_value):
     return fig
 
 
+def mms_to_json(model):
+    serialize = json.dumps
+
+    data = {}
+    data['init_params'] = model.get_params()
+    data['model_params'] = mp = {}
+    for p in ('min_', 'scale_','data_min_', 'data_max_', 'data_range_'):
+        mp[p] = getattr(model, p).tolist()
+    return serialize(data)
+
+def mms_from_json(jstring):
+    data = json.loads(jstring)
+    model = skprep.MinMaxScaler(**data['init_params'])
+    for name, p in data['model_params'].items():
+        setattr(model, name, np.array(p))
+    return model
 
 
 
