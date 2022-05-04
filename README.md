@@ -11,10 +11,24 @@ The repository is organised as following:
 - notebooks: analysis for experimental data
 - viz: live analysis and exploration of experimental data
 
+
+### Max patch:
+
+1. `python client.py`
+1. start the Max patch max/main.maxpat
+1. first time only: install all npm dependencies in tab `process` by clicking on all `npm install ...`
+1. ..... todo .....
+
+### Vizualisation of Recorded Data
+
 Some preliminary data (data_29042022_180743.csv) is currently available under data/user.
 
 To test the live visualisation:
+
+1. clone and cd into this repository
 1. install a Python (obviously:)) emvironement with `conda env create --file requirements.yaml`
-2. activate it with `conda activate rto_nime22`
-3. launch the visualisation program with `python viz/app.py`
-4. drag and drop the csv file in the box
+1. activate it with `conda activate rto_nime22`
+1. launch the visualisation program with `python viz/app.py`
+1. open http://localhost:8050 in a browser
+1. drag and drop the csv file into the box
+
