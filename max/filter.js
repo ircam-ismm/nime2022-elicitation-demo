@@ -60,6 +60,8 @@ Max.addHandler("new_sample", async (...sample) => {
         stroke = [];
         speeds = [];
         timeinterp.reset();
+        unwrap_acc = 0;
+        unwrap_last = 0;
         var res = await Max.outlet("reset_sg");
 
         return 0
@@ -167,6 +169,7 @@ Max.addHandler("segment", async (...sample) => {
     stroke_speed.push(speed);
 
     var angle = Math.atan2(xyp[1], xyp[0]);
+    var angle = unwrap(angle);
     stroke_angle.push(angle);
     // unwrap
     // derivate - two sample late
@@ -204,6 +207,7 @@ Max.addHandler("segment", async (...sample) => {
         }
         obj['xyp_sg'] = xyp;
         obj['s'] = speed;
+        obj['angle'] = angle;
         obj['da'] = dangle;
         obj['segment_id'] = segment_id;
         var res = await Max.outlet("logging_data", JSON.stringify(obj));
@@ -221,6 +225,52 @@ async function new_segment() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+var unwrap_last = 0;
+var unwrap_acc = 0;
+var unwrap_period = Math.PI;
+
+function unwrap(x) {
+    var diff = x + unwrap_acc - unwrap_last;
+
+    if (Math.abs(diff) > unwrap_period) {
+        if (diff < 0) {
+            unwrap_acc += 2*unwrap_period;
+        }
+        if (diff > 0) {
+            unwrap_acc -= 2*unwrap_period;
+        }
+    }
+
+    var unwrap_x = x + unwrap_acc;
+    unwrap_last = unwrap_x;
+
+    return unwrap_x
+}
+
+// def unwrap(x_arr):
+//     global last, acc
+//     last = 0
+//     acc = 0
+//     def unwrap_(x, period=np.pi):
+//         global last, acc
+//         # print(x, last, acc)
+//         diff = x+acc - last
+//         if np.abs(diff) > period:
+//             if diff < 0:
+//                 acc += 2*period
+//             if diff > 0:
+//                 acc -= 2*period
+//         x += acc
+//         last = x
+
+//         return x
+//     res = []
+//     for x in x_arr:
+//         res.append(unwrap_(x))
+
+//     return np.array(res)
+
 
 async function compute_features(segment) {
     // segment : [[t, x, y, p],...]

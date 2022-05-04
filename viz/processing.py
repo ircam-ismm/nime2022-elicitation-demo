@@ -198,9 +198,9 @@ def cb(df, numinput_value):
         hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
         )
     fig.update_layout(
-        title='Speed profile of selected stroke <br>with segments coloured individually.',
-        xaxis_title='x-position',
-        yaxis_title='y-position',
+        title='Feature profile of selected stroke <br>with segments coloured individually.',
+        xaxis_title='timestamp [ms]',
+        yaxis_title='speed',
         showlegend=False,
         autosize=False,
         width=500,

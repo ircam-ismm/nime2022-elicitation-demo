@@ -12,19 +12,28 @@ def format_data(df):
         t0 = row['timestamp0']
         ts = row['timestamp']
         stroke_id = row['stroke_id']
+        segment_id = row['segment_id']
 
         x, y, p = row.get('xyp', default_value)
         x_, y_, p_ = row.get('rel_xyp', default_value)
         x0, y0, p0 = row.get('rel_xyp_lp', default_value)
         x1, y1, p1 = row.get('xyp_sg', default_value)
+        s = row['s']
+        angle = row['angle']
+        da = row['da']
+        da = da[0] if isinstance(da, (list,)) else da
 
-        new_row = [key, t0, ts, stroke_id, x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1]
+        new_row = [key, t0, ts, stroke_id, segment_id,
+                   x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1,
+                   s, angle, da]
         new_rows.append(new_row)
 
     data = pd.DataFrame(data=new_rows, 
-                        columns=['key', 't0', 'ts', 'stroke_id', 
+                        columns=['key', 't0', 'ts',
+                                 'stroke_id', 'segment_id',
                                  'x', 'y', 'p', 'x_', 'y_', 'p_', 
-                                 'x0', 'y0', 'p0', 'x1', 'y1', 'p1']
+                                 'x0', 'y0', 'p0', 'x1', 'y1', 'p1',
+                                 's', 'angle', 'da']
                        )
     return data
 
