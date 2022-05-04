@@ -13,7 +13,7 @@ import dash
 import plotly.graph_objs as go
 import plotly.express as px
 
-from utils import format_from_json, format_from_df
+from utils import format_from_json, format_from_df, select
 import embedding
 
 
@@ -21,7 +21,6 @@ import embedding
 # LAYOUT
 layout = [
     html.Div(id='analysis-layout', children=[
-
 
         html.Div([
             html.Div(id='progress'),
@@ -31,22 +30,18 @@ layout = [
         ),
 
         html.Div([
-                dcc.Graph(id="fig_embedding",),
+                dcc.Dropdown(['NYC', 'MTL', 'SF'], 'NYC', id='fig-embedding-options'),
+                dcc.Graph(id='fig-embedding',),
             ],
             style={'width': '49%', 'display': 'inline-block'},
         ),
-
         html.Div([
-                dcc.Graph(id="fig_strokes",),
+                dcc.Graph(id='fig_selected',),
             ],
             style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
         ),
 
-
-        html.Div(id='tmp'),
-
         ],
-
         style= {'display': 'block'}
         )
     ]
@@ -54,24 +49,24 @@ layout = [
 
 ################################################################################
 # CALLBACKS
-
 @callback(
     ServersideOutput('data-store-embedding', 'data'),
     Input('button_id', 'n_clicks'),
     State('data-store-file', 'data'),
     prevent_initial_call=True,
 )
-def embed_long_callback(n_clicks, df):
-
+def cb(n_clicks, df):
+    """Compute a DTW-TSNE embedding from individual segments.
+    """
     segments = [grp[['s', 'da']].values for i, grp in df.groupby('segment_id')]
 
-    logging.info("cluster start")
+    logging.info('cluster start')
     sm = embedding.compute_similarity_matrix(segments)
-    logging.info("cluster done")
+    logging.info('cluster done')
 
-    logging.info("embed start")
+    logging.info('embed start')
     emb = embedding.tsne_embed(sm, perplexity=30)
-    logging.info("embed done")
+    logging.info('embed done')
 
     emb = pd.DataFrame(emb, columns=['x', 'y'])
 
@@ -79,12 +74,13 @@ def embed_long_callback(n_clicks, df):
 
 
 @callback(
-    Output('fig_embedding', 'figure'),
+    Output('fig-embedding', 'figure'),
     Input('data-store-embedding', 'data'),
     prevent_initial_call=True,
     )
-def create_fig_embedding(df):
-
+def cb(df):
+    """Display the DTW-TSNE embedding.
+    """
     fig = px.scatter(x=df['x'], y=df['y'])
 
     fig = go.Figure(data=fig.data)
@@ -97,13 +93,45 @@ def create_fig_embedding(df):
     return fig
 
 
-import json
+import numpy as np
 
 @callback(
-    Output('tmp', 'children'),
-    Input('fig_embedding', 'selectedData'),
+    Output('fig_selected', 'figure'),
+    Input('fig-embedding', 'selectedData'),
+    State('data-store-file', 'data'),
+    State('data-store-embedding', 'data'),
+    prevent_initial_call=True,
     )
-def cb(selected):
+def cb(selected, df, emb):
+    """Display the selection of segments.
+    """
     print(selected)
-    # return json.dumps(selected)
+
+    selected_ids = [p['pointIndex'] for p in selected['points']]
+
+    selected_data = select(df, segment_id=selected_ids).copy()
+    selected_data['ts_'] = 0
+    def add_ts_(grp):
+        grp['ts_'] = np.arange(grp.shape[0])
+        return grp
+    selected_data = selected_data.groupby('segment_id').apply(add_ts_)
+    fig = px.line(data_frame=selected_data, x='ts_', y='s', facet_col='segment_id', facet_col_wrap=4)
+    fig.layout.update(showlegend=False,
+                      autosize=False,
+                      width=1000,
+                      height=1000,)
+
+    return fig
+
+
+
+
+
+
+
+
+
+
+
+
 

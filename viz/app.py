@@ -26,7 +26,7 @@ app = DashProxy(__name__, external_stylesheets=external_stylesheets,
 app.layout = html.Div(
     # DATASTORES
     [
-    dcc.Store(id='data-store-fig_all'),
+    dcc.Store(id='data-store-fig-all'),
     dcc.Store(id='data-store-sk'),
     dcc.Store(id='data-store-file'),
     dcc.Store(id='data-store-embedding'),
@@ -38,7 +38,7 @@ app.layout = html.Div(
 
     # TABS
     [
-    dcc.Tabs(id="tabs", value='tab-1',
+    dcc.Tabs(id='tabs', value='tab-1',
              children=[dcc.Tab(label='Processing', value='tab-1', children=processing.layout),
                        dcc.Tab(label='Analysis', value='tab-2', children=analysis.layout),
                 ]

@@ -30,7 +30,7 @@ layout = [
     html.Div(id='processing-layout', children=[
 
         html.Div([
-            html.H5("Select stroke:"),
+            html.H5('Select stroke:'),
             daq.NumericInput(id='button-stroke-id',value=0, min=0, max=1e3),
         ],
         style={'width': '100%', 'display': 'inline-block'}
@@ -38,7 +38,7 @@ layout = [
 
         html.Div([
             dbc.Col([
-                dcc.Graph(id="fig_all",),
+                dcc.Graph(id='fig-all',),
                 ]),
             ],
             style={'width': '49%', 'display': 'inline-block'},
@@ -46,8 +46,8 @@ layout = [
 
         html.Div([
             dbc.Col([
-                dcc.Graph(id="fig_trace",),
-                dcc.Graph(id="fig_speed",),
+                dcc.Graph(id='fig-trace',),
+                dcc.Graph(id='fig-speed',),
                 ]),
             ],
             style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
@@ -70,22 +70,26 @@ layout = [
     Input('data-store-small', 'data'),
     prevent_initial_call=True
     )
-def update_rangeslider(small_data):
+def cb(small_data):
+    """Set the range for stroke selection based on stroke ids in the data.
+    """
     stroke_id_list = np.array(small_data['stroke_id_list'])
     return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
 
 
 @callback(
     Output('data-store-sk', 'data'),
-    ServersideOutput('data-store-fig_all', 'data'),
+    ServersideOutput('data-store-fig-all', 'data'),
     Input('data-store-file', 'data'),
     prevent_initial_call=True,
     )
-def create_fig_all(df):
+def cb(df):
+    """Create a scatter with all points.
+    """
     mms = skprep.MinMaxScaler(feature_range=(10, 80))
     p_scaled = mms.fit_transform(df['p'].values.reshape(-1,1)).reshape(-1)
 
-    fig = px.scatter(x=df['x'], y=df['y'], opacity=0.05)
+    fig = px.scatter(x=df['x'], y=df['y'], opacity=0.05,)
     fig.update_traces(marker=dict(color='black', size=p_scaled))
 
     mms_json = mms_to_json(mms)
@@ -94,14 +98,16 @@ def create_fig_all(df):
 
 
 @callback(
-    Output('fig_all', 'figure'),
+    Output('fig-all', 'figure'),
     Input('data-store-file', 'data'),
-    Input('data-store-fig_all', 'data'),
+    Input('data-store-fig-all', 'data'),
     Input('data-store-sk', 'data'),
     Input('button-stroke-id', 'value'),
     prevent_initial_call=True,
     )
-def update_graph_all(data_df, fig_a, sk_data, value):
+def cb(data_df, fig_a, sk_data, value):
+    """Update the scatter with all points with a specific stroke.
+    """
     if sk_data == None:
         return dash.no_update
 
@@ -114,20 +120,27 @@ def update_graph_all(data_df, fig_a, sk_data, value):
         fig_b.update_traces(marker=dict(size=p_scaled))
 
     fig = go.Figure(data=fig_a.data + fig_b.data)
-    fig.layout.update(showlegend=False,
-                      autosize=False,
-                      width=1000,
-                      height=1000,)
+
+    fig.layout.update(
+        title='Position (x, y) of all touch points with selected stroke in blue.',
+        xaxis_title='x-position',
+        yaxis_title='y-position',
+        showlegend=False,
+        autosize=False,
+        width=1000,
+        height=1000,)
     return fig
 
 
 @callback(
-    Output('fig_trace', 'figure'),
+    Output('fig-trace', 'figure'),
     Input('data-store-file', 'data'),
     Input('data-store-sk', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def update_graph_stroke(df, sk_data, numinput_value):
+def cb(df, sk_data, numinput_value):
+    """Display a single stroke (x, y) with its segments coloured individually.
+    """
     if sk_data is None:
         return dash.no_update
 
@@ -135,12 +148,22 @@ def update_graph_stroke(df, sk_data, numinput_value):
 
     if stroke_i.shape[0] > 0:
         mms = mms_from_json(sk_data)
-        p_scaled = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
-        colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-        fig = px.scatter(x=stroke_i['x'], y=stroke_i['y'], color=colors, size=p_scaled)
+        stroke_i['size'] = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
+        stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+
+        fig = px.scatter(
+                data_frame=stroke_i, x='x', y='y', color='color', size='size',
+                custom_data=['segment_id']
+                )
 
     fig = go.Figure(data=fig.data)
+    fig.update_traces(
+        hovertemplate="ID:%{customdata}<extra></extra>"
+        )
     fig.layout.update(
+        title='Position (x, y) of selected stroke <br>with segments coloured individually.',
+        xaxis_title='x-position',
+        yaxis_title='y-position',
         showlegend=False,
         autosize=False,
         width=500,
@@ -150,31 +173,41 @@ def update_graph_stroke(df, sk_data, numinput_value):
     return fig
 
 @callback(
-    Output('fig_speed', 'figure'),
+    Output('fig-speed', 'figure'),
     Input('data-store-file', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def update_graph_speed(df, numinput_value):
+def cb(df, numinput_value):
+    """Display a single stroke (ts, s) with its segments coloured individually.
+    """
     if df is None:
         return dash.no_update
 
     stroke_i = select(df, stroke_id=numinput_value)
 
     if stroke_i.shape[0] > 0:
-        colors = ["rgba"+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-        fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors)
+        colors = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+        fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors,)
 
     fig = go.Figure(data=fig.data)
+    fig.update_traces(
+        hovertemplate="%t:{x} <br>s:%{y:.2f}<extra></extra>"
+        )
     fig.update_layout(
+        title='Speed profile of selected stroke <br>with segments coloured individually.',
+        xaxis_title='x-position',
+        yaxis_title='y-position',
         showlegend=False,
         autosize=False,
         width=500,
         height=500,
-    )
+        )
 
     return fig
 
 
+################################################################################
+# UTILS
 def mms_to_json(model):
     serialize = json.dumps
 
