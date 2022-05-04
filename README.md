@@ -19,7 +19,7 @@ The repository is organised as following:
 1. first time only: install all npm dependencies in tab `process` by clicking on all `npm install ...`
 1. ..... todo .....
 
-### Vizualisation of Recorded Data
+### Visualization of Recorded Data
 
 Some preliminary data (data_29042022_180743.csv) is currently available under data/user.
 
