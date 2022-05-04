@@ -31,7 +31,7 @@ layout = [
         ),
 
         html.Div([
-                dcc.Dropdown(['NYC', 'MTL', 'SF'], 'NYC', id='fig-embedding-options'),
+                # dcc.Dropdown(['NYC', 'MTL', 'SF'], 'NYC', id='fig-embedding-options'),
                 dcc.Graph(id='fig-embedding',),
             ],
             style={'width': '49%', 'display': 'inline-block'},
@@ -82,9 +82,13 @@ def cb(n_clicks, df):
 def cb(df):
     """Display the DTW-TSNE embedding.
     """
-    fig = px.scatter(x=df['x'], y=df['y'])
+    df['segment_id'] = np.arange(df.shape[0])
+    fig = px.scatter(data_frame=df, x='x', y='y', custom_data=['segment_id'])
 
     fig = go.Figure(data=fig.data)
+    fig.update_traces(
+        hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
+        )
     fig.layout.update(showlegend=False,
                       autosize=False,
                       width=1000,
@@ -114,7 +118,7 @@ def cb(selected, df, emb):
         grp['ts_'] = np.arange(grp.shape[0])
         return grp
     selected_data = selected_data.groupby('segment_id').apply(add_ts_)
-    fig = px.line(data_frame=selected_data, x='ts_', y='s', facet_col='segment_id', facet_col_wrap=4)
+    fig = px.line(data_frame=selected_data, x='ts_', y=['s', 'da'], facet_col='segment_id', facet_col_wrap=4)
     fig.layout.update(showlegend=False,
                       autosize=False,
                       width=1000,
