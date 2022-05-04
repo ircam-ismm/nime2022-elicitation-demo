@@ -1,6 +1,7 @@
 
 import logging
 
+import numpy as np
 import pandas as pd
 
 from dash_extensions.enrich import Output, Input, State
@@ -92,8 +93,6 @@ def cb(df):
 
     return fig
 
-
-import numpy as np
 
 @callback(
     Output('fig_selected', 'figure'),

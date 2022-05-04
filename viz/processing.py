@@ -144,7 +144,7 @@ def cb(df, sk_data, numinput_value):
     if sk_data is None:
         return dash.no_update
 
-    stroke_i = select(df, stroke_id=numinput_value)
+    stroke_i = select(df, stroke_id=numinput_value).copy()
 
     if stroke_i.shape[0] > 0:
         mms = mms_from_json(sk_data)
@@ -183,15 +183,19 @@ def cb(df, numinput_value):
     if df is None:
         return dash.no_update
 
-    stroke_i = select(df, stroke_id=numinput_value)
+    stroke_i = select(df, stroke_id=numinput_value).copy()
 
     if stroke_i.shape[0] > 0:
-        colors = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-        fig = px.scatter(x=stroke_i['ts'], y=stroke_i['s'], color=colors,)
+        stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+
+        fig = px.scatter(
+                data_frame=stroke_i, x='ts', y='s', color='color',
+                custom_data=['segment_id']
+                )
 
     fig = go.Figure(data=fig.data)
     fig.update_traces(
-        hovertemplate="%t:{x} <br>s:%{y:.2f}<extra></extra>"
+        hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
         )
     fig.update_layout(
         title='Speed profile of selected stroke <br>with segments coloured individually.',

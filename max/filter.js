@@ -187,7 +187,7 @@ Max.addHandler("segment", async (...sample) => {
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
             Max.post("min: ", stroke.length, last_3[1]);
-            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (stroke.length > 50)) {
+            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (cur_segment_len > 50)) {
                 Max.post("SEGMENT !!!:", segment_id, stroke.length);
                 new_segment();
                 last_segment_end = cur_segment_len;
