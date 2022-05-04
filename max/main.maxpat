@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 422.0, 143.0, 1318.0, 999.0 ],
+		"rect" : [ 422.0, 142.0, 1318.0, 999.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -2353,7 +2353,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 422.0, 169.0, 1318.0, 973.0 ],
+						"rect" : [ 422.0, 168.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -3202,7 +3202,7 @@
 			}
 , 			{
 				"name" : "filter.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new",
+				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
 				"implicit" : 1
@@ -3215,7 +3215,7 @@
 			}
 , 			{
 				"name" : "format_sg.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new",
+				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
 				"implicit" : 1
@@ -3246,7 +3246,7 @@
 			}
 , 			{
 				"name" : "sensel_ui.maxpat",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new",
+				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
 				"implicit" : 1
@@ -3254,20 +3254,20 @@
 , 			{
 				"name" : "sp.angles.maxpat",
 				"bootpath" : "~/Documents/Max 8/Library/Gestural-Sound-Toolkit/mod-analysis/signal-processing",
-				"patcherrelativepath" : "../../../../Max 8/Library/Gestural-Sound-Toolkit/mod-analysis/signal-processing",
+				"patcherrelativepath" : "../../../../../Max 8/Library/Gestural-Sound-Toolkit/mod-analysis/signal-processing",
 				"type" : "JSON",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "sp.norm.maxpat",
 				"bootpath" : "~/Documents/Max 8/Library/Gestural-Sound-Toolkit/mod-analysis/signal-processing",
-				"patcherrelativepath" : "../../../../Max 8/Library/Gestural-Sound-Toolkit/mod-analysis/signal-processing",
+				"patcherrelativepath" : "../../../../../Max 8/Library/Gestural-Sound-Toolkit/mod-analysis/signal-processing",
 				"type" : "JSON",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "unistroke.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new",
+				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
 				"implicit" : 1
