@@ -5,13 +5,16 @@ const { performance } = require('perf_hooks');
 // package imports
 var Fili = require('fili');
 var SG = require('ml-savitzky-golay').default;
-var DTW = require("dynamic-time-warping");
-var nj = require("numjs");
+var DTW = require('dynamic-time-warping');
+
 
 // local imports
 var debug = require('./debug.js');
-var timeinterp = require('./timeinterp.js');
+var utils = require('./utils.js');
 
+// utils functions
+var timeinterp = new utils.timeinterp();
+var unwrap = new utils.unwrap();
 
 
 var LOGGING_DEBUG = 3;
@@ -25,8 +28,8 @@ var fp_timestamp = 0;
 var fp_values = [];
 
 Max.addHandler("new_sample", async (...sample) => {
+    // Expected format is
     // sample: t, stroke_id, touch, finger_id, _, x, y, p
-
 
     var timestamp = parseInt(sample[0]);
     var stroke_id = parseInt(sample[1]);
@@ -38,50 +41,34 @@ Max.addHandler("new_sample", async (...sample) => {
     if (finger == 1) {
 
     // detect stroke segmentation
-    if (touching && first_point_state) {
-        // first point
+    if (touching && first_point_state) { // first point
         Max.post("FIRST POINT");
         first_point_state = false;
-
         fp_timestamp = timestamp;
         fp_values = xyp;
     }
-
-    // last point
-    if (!touching) {
+    if (!touching) { // last point
         Max.post("LAST POINT");
-
         if (stroke.length > 10) {
             new_segment(); // send the last recorded data as a new segment
         }
-
+        // reinit global variables
         first_point_state = true;
         for (var i=0; i<NDIMS; i++) {iirFilters[i].reinit();}
         stroke = [];
         speeds = [];
-        timeinterp.reset();
-        unwrap_acc = 0;
-        unwrap_last = 0;
+        unwrap.reset();
         var res = await Max.outlet("reset_sg");
-
         return 0
     }
 
     // linear time interpolation
     var sample_interp = timeinterp.new_sample(timestamp, xyp, fp_timestamp);
-
-    // Max.post("NEW", timestamp, fp_timestamp, touching, finger, first_point_state, sample_interp.length);
-
     // loop over interpolated samples
     for (index in sample_interp) {
-        // if (LOGGING_DEBUG > 1) {Max.post("new_sample", timestamp, sample_interp.length, sample_interp[index][0]);}
-
         var timestamp_interp = sample_interp[index][0];
         var sample_key = timestamp.toString() + "_" + timestamp_interp.toString();
         var xyp_interp = sample_interp[index].slice(-3);
-
-        // Max.post("NEW", timestamp, timestamp_interp, sample_key);
-
         // substract current position from first stroke point touchdown
         var rel_xyp = xyp_interp.map(function (num, idx) { return num-fp_values[idx] });
         // lowpass
@@ -154,24 +141,16 @@ var sg_options = {
 
 
 Max.addHandler("segment", async (...sample) => {
-
     cur_segment_len += 1;
-
-    // Max.post("IN SEGMENT", sample);
+    stroke.push(sample);
 
     var sample_key = sample[0];
     var xyp = sample.slice(-3);
-
-    stroke.push(sample);
-
-
     var speed = 100*Math.sqrt(Math.pow(xyp[0], 2) + Math.pow(xyp[1], 2));
     stroke_speed.push(speed);
-
     var angle = Math.atan2(xyp[1], xyp[0]);
-    var angle = unwrap(angle);
+    var angle = unwrap.unwrap(angle);
     stroke_angle.push(angle);
-    // unwrap
     // derivate - two sample late
     var dangle = 0;
     if (stroke.length > SG_WINDOW_SIZE) {
@@ -179,14 +158,11 @@ Max.addHandler("segment", async (...sample) => {
     }
     stroke_dangle.push(dangle);
 
-
     Max.post("segment: ", stroke.length, speed);
 
-    // Max.post("speed:", speed);
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
         var last_3 = stroke_speed.slice(-3);
-        // Max.post("last_3:", last_3, last_3[0] > last_3[1], last_3[2] > last_3[1]);
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
             Max.post("min: ", stroke.length, last_3[1]);
@@ -200,7 +176,6 @@ Max.addHandler("segment", async (...sample) => {
     }
 
     if (LOGGING_DATA) {
-        // Max.post("SEGMENT", sample_key);
         var obj = to_log[sample_key];
         if (obj == undefined) {
             obj = {};
@@ -212,7 +187,6 @@ Max.addHandler("segment", async (...sample) => {
         obj['segment_id'] = segment_id;
         var res = await Max.outlet("logging_data", JSON.stringify(obj));
     }
-
 });
 
 var segment_id = 0;
@@ -225,51 +199,6 @@ async function new_segment() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-var unwrap_last = 0;
-var unwrap_acc = 0;
-var unwrap_period = Math.PI;
-
-function unwrap(x) {
-    var diff = x + unwrap_acc - unwrap_last;
-
-    if (Math.abs(diff) > unwrap_period) {
-        if (diff < 0) {
-            unwrap_acc += 2*unwrap_period;
-        }
-        if (diff > 0) {
-            unwrap_acc -= 2*unwrap_period;
-        }
-    }
-
-    var unwrap_x = x + unwrap_acc;
-    unwrap_last = unwrap_x;
-
-    return unwrap_x
-}
-
-// def unwrap(x_arr):
-//     global last, acc
-//     last = 0
-//     acc = 0
-//     def unwrap_(x, period=np.pi):
-//         global last, acc
-//         # print(x, last, acc)
-//         diff = x+acc - last
-//         if np.abs(diff) > period:
-//             if diff < 0:
-//                 acc += 2*period
-//             if diff > 0:
-//                 acc -= 2*period
-//         x += acc
-//         last = x
-
-//         return x
-//     res = []
-//     for x in x_arr:
-//         res.append(unwrap_(x))
-
-//     return np.array(res)
 
 
 async function compute_features(segment) {
@@ -306,98 +235,4 @@ async function compute_features(segment) {
     }
 }
 
-var distance_p1_2d = function (a, b) {
-    var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
-    var sum = diff.reduce((a, b) => a + b, 0);
-    return sum
-}
 
-var models = {};
-function compute_distance(A) {
-    // Computes the minimum DTW distance of A against all previously recorded
-    // identified segments.
-    // Inputs:
-    //   A: a multidimensional equispaced time series.
-    // Returns:
-    //   The minimum DTW distance.
-
-    var min_key = 0;
-    var min_dist = 10000;
-
-    n_models = Object.keys(models).length;
-    // if no models yet, store series and return
-    if (n_models == 0) {
-        models[0] = A;
-    }
-    // else loop over all models and find closest
-    else {
-
-        for (key in models) {
-            var B = models[key];
-            var dtw = new DTW(A, B, distance_p1_2d);
-            var cur_dist = dtw.getDistance();
-
-            if (cur_dist < min_dist) {
-                min_key = key;
-                min_dist = cur_dist;
-            }
-        }
-        // store model
-        models[n_models] = A;
-    }
-
-    return [min_key, min_dist]
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// TRASH
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// Max.addHandler("new_state", async (...state) => {
-//     Max.post("new_state:", state);
-//     // new state is one one touch down and 0 on touch up
-//     new_stroke = (state == 1);
-//     if (new_stroke) {
-//         Max.post("new stroke\n");
-
-//     }
-//     else {
-//         // reset LPF and SG
-//         for (var i=0; i<NDIMS; i++) {
-//             iirFilters[i].reinit();
-//         }
-//         var res = await Max.outlet("reset_sg");
-//         // erase stored data
-//         stroke = [];
-//         speeds = [];
-//         timeinterp.reset();
-//         Max.post("end stroke\n");
-//     }
-// });
-
-
-    //     if (first_point_state) {
-    //         if (LOGGING_DEBUG > 0) {Max.post("stroke touchdown", timestamp_interp, xyp_interp);}
-    //         first_point_value = xyp_interp;
-    //         first_point_value[2] = 0; // initial pressure is always 0
-    //         first_point_state = false;
-    //     }
-
-    // substract current position from first stroke point touchdown
-    //     var finger = sample[1];
-    //     if (finger == 1) {
-    //         var rel_xyp = xyp_interp.map(function (num, idx) { return num-first_point_value[idx] });
-    //         var rel_xyp_lp = lowpass(rel_xyp);
-
-    //         // send to pipo
-    //         rel_xyp_lp = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
-    //         var res = [timestamp_interp].concat(rel_xyp_lp)
-    //         var res = await Max.outlet("lowpass", res.join(" "));
-
-    //         if (LOGGING_DATA) {
-    //             var obj = to_log[timestamp_interp]
-    //             obj['xyp_lp'] = rel_xyp_lp;
-    //         }
-    //     }
-    // }
