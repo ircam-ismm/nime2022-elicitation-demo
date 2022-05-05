@@ -37,8 +37,6 @@ layout = [
             ],
         className='row'),
 
-        # html.Div([], style={'width': '100%', 'display': 'inline-block'}),
-
         html.Div([
             dbc.Col([
                 dcc.Graph(id='fig-all',),

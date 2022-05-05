@@ -50,7 +50,8 @@ layout = [
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
     State('upload-data', 'last_modified'),
-    prevent_initial_call=True)
+    prevent_initial_call=True,
+    )
 def upload_data(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         children = [
@@ -96,9 +97,9 @@ def parse_contents(contents, filename, date):
     stroke_segment_map = {}
     segment_stroke_map = {}
     for i, row in tmp.iteritems():
-        stroke_segment_map[int(i)] = row
+        stroke_segment_map[i] = row
         for segment in row:
-            segment_stroke_map[int(segment)] = i
+            segment_stroke_map[segment] = i
     small_data['stroke_segment_map'] = stroke_segment_map
     small_data['segment_stroke_map'] = segment_stroke_map
 

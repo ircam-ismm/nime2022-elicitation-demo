@@ -51,10 +51,11 @@ layout = [
 ################################################################################
 # CALLBACKS
 @callback(
-    ServersideOutput('data-store-embedding', 'data'),
+    ServersideOutput('data-store-embedding', 'data', session_check=False, arg_check=False),
     Input('button_id', 'n_clicks'),
     State('data-store-file', 'data'),
     prevent_initial_call=True,
+    memoize=True,
 )
 def cb(n_clicks, df):
     """Compute a DTW-TSNE embedding from individual segments.
@@ -89,11 +90,14 @@ def cb(df):
     fig.update_traces(
         hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
         )
-    fig.layout.update(showlegend=False,
-                      autosize=False,
-                      width=1000,
-                      height=1000,)
-    print(fig)
+    fig.layout.update(
+        title='t-SNE embedding of segment data based on DTW distance.',
+        dragmode='select',
+        showlegend=False,
+        autosize=False,
+        width=1000,
+        height=1000,)
+    # print(fig)
 
     return fig
 
