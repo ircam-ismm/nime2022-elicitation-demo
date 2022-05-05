@@ -4,6 +4,8 @@ import pandas as pd
 import seaborn as sns
 tab10 = sns.color_palette('tab10')
 
+import sklearn.preprocessing as skprep
+
 ################################################################################
 # data file processing
 
@@ -26,10 +28,11 @@ def format_data(df):
 
     for i, row in df.iterrows():
 
-        row = eval(row['data'].replace("false", "False"))
+        row = eval(row['data'].replace('false', 'False'))
 
         key = row['sample_key']
         t0 = row['timestamp0']
+        t0_norm = 0
         ts = row['timestamp']
         stroke_id = row['stroke_id']
         segment_id = row['segment_id']
@@ -39,20 +42,26 @@ def format_data(df):
         x0, y0, p0 = row.get('rel_xyp_lp', default_value)
         x1, y1, p1 = row.get('xyp_sg', default_value)
         s = row['s']
+        angle = row['angle']
         da = row['da']
         da = da[0] if isinstance(da, (list,)) else da
     
-        new_row = [key, t0, ts, stroke_id, segment_id, 
-                   x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1, s, da]
+        new_row = [key, t0, t0_norm, ts, stroke_id, segment_id, 
+                   x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1,
+                   s, angle, da]
+
         new_rows.append(new_row)
 
     data = pd.DataFrame(data=new_rows,
-                        columns=['key', 't0', 'ts',
+                        columns=['key', 't0', 't0_norm', 'ts',
                                  'stroke_id', 'segment_id',
                                  'x', 'y', 'p', 'x_', 'y_', 'p_',
                                  'x0', 'y0', 'p0', 'x1', 'y1', 'p1',
-                                 's', 'da']
+                                 's', 'angle', 'da']
                        )
+    mms = skprep.MinMaxScaler()
+    data['t0_norm'] = mms.fit_transform(data['t0'].values.reshape(-1, 1)).reshape(-1)
+    
     return data
 
 # def format_feat(df):

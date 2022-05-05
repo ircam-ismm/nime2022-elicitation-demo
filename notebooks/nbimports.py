@@ -1,6 +1,5 @@
 import sys, os
 from importlib import reload
-# from pathlib import Path
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -12,14 +11,12 @@ import scipy.signal as scsig
 
 tab10 = sns.color_palette('tab10')
 
-# import sklearn.preprocessing as skprep
-# import scipy.stats as sstat
-# import pingouin as pg
-
 # load the app located in ../src
+# from pathlib import Path
 # USER_HOME = Path.home()
 # RTO_ROOT = "Documents/research/rto/src/"
-# sys.path.append(os.path.join(USER_HOME, RTO_ROOT))
+sys.path.append('../viz')
+import utils
 
 # pandas select
 from functools import reduce
