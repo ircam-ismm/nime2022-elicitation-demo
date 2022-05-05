@@ -25,15 +25,8 @@ import embedding
 layout = [
     html.Div(id='analysis-layout', children=[
 
-        html.Div([
-            html.Div(id='progress'),
-            html.Button(id='button_id', children='Run Job!'),
-        ],
-        style={'width': '100%', 'display': 'inline-block'}
-        ),
 
         html.Div([
-                # dcc.Dropdown(['NYC', 'MTL', 'SF'], 'NYC', id='fig-embedding-options'),
                 dcc.Graph(id='fig-embedding',),
             ],
             style={'width': '49%', 'display': 'inline-block'},
@@ -43,6 +36,12 @@ layout = [
                 dcc.Graph(id='fig-selected',),
             ],
             style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
+        ),
+
+        html.Div([
+            html.Button(id='button_id', children='Embed!'),
+        ],
+        style={'width': '100%', 'display': 'inline-block'}
         ),
 
         ],
@@ -91,9 +90,7 @@ def cb(emb, df):
         return dash.no_update
 
     # compute color
-    mms = skprep.MinMaxScaler()
-    df['t0_'] = mms.fit_transform(df['t0'].values.reshape(-1, 1)).reshape(-1)
-    color=df.groupby('segment_id')['t0_'].mean()
+    color=df.groupby('segment_id')['t0_norm'].mean()
 
     emb['segment_id'] = np.arange(emb.shape[0])
     fig = px.scatter(data_frame=emb, x='x', y='y',
@@ -126,7 +123,8 @@ def cb(emb, df):
 def cb(xy, selected, df, emb):
     """Display the selection of segments.
     """
-    print(selected)
+    if selected is None:
+        return dash.no_update
 
     selected_ids = [p['pointIndex'] for p in selected['points']]
 

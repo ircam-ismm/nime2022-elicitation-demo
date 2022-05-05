@@ -47,15 +47,23 @@ layout = [
 
         html.Div([
             dbc.Col([
+                dcc.Graph(id='fig-stats',),
                 dcc.Graph(id='fig-trace',),
+                ]),
+            ],
+            style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'top'},
+        ),
+
+        html.Div([
+            dbc.Col([
+                dcc.Graph(id='fig-tmp',),
                 dcc.Graph(id='fig-speed',),
                 ]),
             ],
-            style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
+            style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'top'},
         ),
-
         # this align the slider to the right hand side
-        html.Div([], style={'width': '49%', 'display': 'inline-block'},),
+        # html.Div([], style={'width': '49%', 'display': 'inline-block'},),
     ],
     style= {'display': 'none'}
     )
@@ -233,6 +241,49 @@ def cb(df, numinput):
         title='Feature profile of stroke {}<br>with segments coloured individually.'.format(numinput),
         xaxis_title='timestamp [ms]',
         yaxis_title='speed',
+        showlegend=False,
+        autosize=False,
+        width=500,
+        height=500,
+        )
+
+    return fig
+
+
+@callback(
+    Output('fig-stats', 'figure'),
+    Input('data-store-file', 'data'),
+    prevent_initial_call=True,
+    )
+def cb(df):
+    """Display the histogram of speed in the whole dataset.
+    """
+    if df is None:
+        return dash.no_update
+
+    fig = px.histogram(df, x='s')
+    fig.layout.update(
+        title='Histogram of speed value (used for segmentation).',
+        showlegend=False,
+        autosize=False,
+        width=500,
+        height=500,
+        )
+
+    return fig
+
+
+@callback(
+    Output('fig-tmp', 'figure'),
+    Input('data-store-file', 'data'),
+    prevent_initial_call=True,
+    )
+def cb(df):
+    """Display the histogram of speed in the whole dataset.
+    """
+    fig = px.histogram(df, x='p')
+    fig.layout.update(
+        title='Histogram of pressure.',
         showlegend=False,
         autosize=False,
         width=500,
