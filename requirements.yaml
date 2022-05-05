@@ -18,6 +18,7 @@ dependencies:
 - duartexyz::detecta
 
 - pip:
+  - python-osc
   - diskcache
   - dash
   - dash_extensions
