@@ -971,7 +971,7 @@
 									"maxclass" : "newobj",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 1060.5, 502.349651336669922, 56.0, 22.0 ],
+									"patching_rect" : [ 1060.5, 501.349651336669922, 56.0, 22.0 ],
 									"text" : "s novelty"
 								}
 

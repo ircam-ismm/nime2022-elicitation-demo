@@ -117,14 +117,16 @@ function dtw_compute() {
         n_models = Object.keys(this.models).length;
         // if no models yet, store series and return
         if (n_models == 0) {
-            this.models[0] = A;
+            this.models[0] = [A];
         }
         // else loop over all models and find closest
         else {
 
             for (key in this.models) {
                 var B = this.models[key];
-                var dtw = new DTW(A, B, this.distance_p1_2d);
+                var C = B[Math.floor(Math.random() * B.length)];
+
+                var dtw = new DTW(A, C, this.distance_p1_2d);
                 var cur_dist = dtw.getDistance();
 
                 if (cur_dist < min_dist) {
@@ -133,7 +135,12 @@ function dtw_compute() {
                 }
             }
             // TODO: store model only if min distance under threshold
-            this.models[n_models] = A;
+            if (min_dist < 2) {
+                this.models[min_key].push(A);
+            }
+            else {
+                this.models[n_models] = [A];
+            }
         }
         return [min_key, min_dist]
     }
