@@ -138,7 +138,7 @@ def cb(df):
 def cb(df, fig_a, sk_data, numinput):
     """Update the scatter with all points with a specific stroke.
     """
-    if sk_data == None:
+    if sk_data is None:
         return dash.no_update
 
     mms = mms_from_json(sk_data)
