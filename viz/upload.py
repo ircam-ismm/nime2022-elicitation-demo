@@ -87,13 +87,29 @@ def parse_contents(contents, filename, date):
     stroke_id_list = list(set(data_df['stroke_id']))
     small_data['stroke_id_list'] = stroke_id_list
     small_data['num_strokes'] = len(stroke_id_list)
+    segment_id_list = list(set(data_df['segment_id']))
+    small_data['segment_id_list'] = segment_id_list
+    small_data['num_segments'] = len(segment_id_list)
+
+    # create map between stroke and segment ids, vice et versa
+    tmp = data_df.groupby('stroke_id').apply(lambda x: list(set(x['segment_id'])))
+    stroke_segment_map = {}
+    segment_stroke_map = {}
+    for i, row in tmp.iteritems():
+        stroke_segment_map[int(i)] = row
+        for segment in row:
+            segment_stroke_map[int(segment)] = i
+    small_data['stroke_segment_map'] = stroke_segment_map
+    small_data['segment_stroke_map'] = segment_stroke_map
 
     # summary of file upload
-    a, b = min(stroke_id_list), max(stroke_id_list),
+    a, b = min(stroke_id_list), max(stroke_id_list)
+    c, d = min(segment_id_list), max(segment_id_list)
     table_data = [
     ['filename', filename],
     ['lines', str(df.shape[0])],
     ['stroke_id', str(a)+' ... '+str(b)],
+    ['segment_id', str(c)+' ... '+str(d)],
     ]
     html_table = html.Div([
         html.Table([

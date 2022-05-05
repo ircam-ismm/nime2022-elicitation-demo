@@ -30,11 +30,14 @@ layout = [
     html.Div(id='processing-layout', children=[
 
         html.Div([
-            html.H5('Select stroke:'),
-            daq.NumericInput(id='button-stroke-id',value=0, min=0, max=1e3),
-        ],
-        style={'width': '100%', 'display': 'inline-block'}
-        ),
+            html.Div([daq.NumericInput(id='button-stroke-id', label='stroke:', value=0, min=0, max=1e3),],
+                     className='one columns'),
+            html.Div([daq.NumericInput(id='button-segment-id', label='segment:',value=-1, min=0, max=1e3),],
+                     className='one columns'),
+            ],
+        className='row'),
+
+        # html.Div([], style={'width': '100%', 'display': 'inline-block'}),
 
         html.Div([
             dbc.Col([
@@ -66,7 +69,6 @@ layout = [
 @callback(
     Output('button-stroke-id', 'min'),
     Output('button-stroke-id', 'max'),
-    Output('button-stroke-id', 'value'),
     Input('data-store-small', 'data'),
     prevent_initial_call=True
     )
@@ -74,7 +76,37 @@ def cb(small_data):
     """Set the range for stroke selection based on stroke ids in the data.
     """
     stroke_id_list = np.array(small_data['stroke_id_list'])
-    return stroke_id_list.min(), stroke_id_list.max(), stroke_id_list.min()
+    return stroke_id_list.min(), stroke_id_list.max()
+
+@callback(
+    Output('button-segment-id', 'min'),
+    Output('button-segment-id', 'max'),
+    Input('data-store-small', 'data'),
+    prevent_initial_call=True
+    )
+def cb(small_data):
+    """Set the range for segment selection based on segment ids in the data.
+    """
+    segment_id_list = np.array(small_data['segment_id_list'])
+    return segment_id_list.min(), segment_id_list.max()
+
+@callback(
+    Output('button-stroke-id', 'value'),
+    Input('button-segment-id', 'value'),
+    Input('data-store-small', 'data'),
+    prevent_initial_call=True
+    )
+def cb(numinput, small_data):
+    """Set the stroke id from a segment id selection or on page load.
+    """
+    if numinput != -1:
+        segment_stroke_map = small_data['segment_stroke_map']
+        stroke_id = segment_stroke_map[str(numinput)]
+    else:
+        stroke_id_list = np.array(small_data['stroke_id_list'])
+        stroke_id = stroke_id_list.min()
+
+    return stroke_id
 
 
 @callback(
@@ -89,7 +121,7 @@ def cb(df):
     mms = skprep.MinMaxScaler(feature_range=(10, 80))
     p_scaled = mms.fit_transform(df['p'].values.reshape(-1,1)).reshape(-1)
 
-    fig = px.scatter(x=df['x'], y=df['y'], opacity=0.05,)
+    fig = px.scatter(data_frame=df, x='x', y='y', custom_data=['stroke_id'], opacity=0.05,)
     fig.update_traces(marker=dict(color='black', size=p_scaled))
 
     mms_json = mms_to_json(mms)
@@ -105,24 +137,26 @@ def cb(df):
     Input('button-stroke-id', 'value'),
     prevent_initial_call=True,
     )
-def cb(data_df, fig_a, sk_data, value):
+def cb(df, fig_a, sk_data, numinput):
     """Update the scatter with all points with a specific stroke.
     """
     if sk_data == None:
         return dash.no_update
 
     mms = mms_from_json(sk_data)
-    stroke_df = select(data_df, stroke_id=value)
+    stroke_df = select(df, stroke_id=numinput)
 
     if stroke_df.shape[0] > 0:
         p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
-        fig_b = px.scatter(x=stroke_df['x'], y=stroke_df['y'], opacity=1)
+        fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id'], opacity=1)
         fig_b.update_traces(marker=dict(size=p_scaled))
 
     fig = go.Figure(data=fig_a.data + fig_b.data)
-
+    fig.update_traces(
+        hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
+        )
     fig.layout.update(
-        title='Position (x, y) of all touch points with selected stroke in blue.',
+        title='Position (x, y) of all touch points with stroke {} in blue.'.format(numinput),
         xaxis_title='x-position',
         yaxis_title='y-position',
         showlegend=False,
@@ -138,13 +172,13 @@ def cb(data_df, fig_a, sk_data, value):
     Input('data-store-sk', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def cb(df, sk_data, numinput_value):
+def cb(df, sk_data, numinput):
     """Display a single stroke (x, y) with its segments coloured individually.
     """
     if sk_data is None:
         return dash.no_update
 
-    stroke_i = select(df, stroke_id=numinput_value).copy()
+    stroke_i = select(df, stroke_id=numinput).copy()
 
     if stroke_i.shape[0] > 0:
         mms = mms_from_json(sk_data)
@@ -161,7 +195,7 @@ def cb(df, sk_data, numinput_value):
         hovertemplate="ID:%{customdata}<extra></extra>"
         )
     fig.layout.update(
-        title='Position (x, y) of selected stroke <br>with segments coloured individually.',
+        title='Position (x, y) of stroke {}<br>with segments coloured individually.'.format(numinput),
         xaxis_title='x-position',
         yaxis_title='y-position',
         showlegend=False,
@@ -177,13 +211,13 @@ def cb(df, sk_data, numinput_value):
     Input('data-store-file', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def cb(df, numinput_value):
+def cb(df, numinput):
     """Display a single stroke (ts, s) with its segments coloured individually.
     """
     if df is None:
         return dash.no_update
 
-    stroke_i = select(df, stroke_id=numinput_value).copy()
+    stroke_i = select(df, stroke_id=numinput).copy()
 
     if stroke_i.shape[0] > 0:
         stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
@@ -198,7 +232,7 @@ def cb(df, numinput_value):
         hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
         )
     fig.update_layout(
-        title='Feature profile of selected stroke <br>with segments coloured individually.',
+        title='Feature profile of stroke {}<br>with segments coloured individually.'.format(numinput),
         xaxis_title='timestamp [ms]',
         yaxis_title='speed',
         showlegend=False,
