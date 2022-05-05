@@ -3,26 +3,21 @@ const Max = require('max-api');
 const { performance } = require('perf_hooks');
 
 // package imports
-var Fili = require('fili');
 var SG = require('ml-savitzky-golay').default;
-var DTW = require('dynamic-time-warping');
-
-
 // local imports
-var debug = require('./debug.js');
 var utils = require('./utils.js');
-
 // utils functions
 var timeinterp = new utils.timeinterp();
 var unwrap = new utils.unwrap();
+var lowpass = new utils.lowpass();
+lowpass.init();
 
-
-var LOGGING_DEBUG = 3;
+// logging
 var LOGGING_DATA = true;
 var to_log = {};
 
 ////////////////////////////////////////////////////////////////////////////////
-// filter from incoming data source
+// filter from incoming data source and send to pipo savgol
 var first_point_state = true;
 var fp_timestamp = 0;
 var fp_values = [];
@@ -54,10 +49,10 @@ Max.addHandler("new_sample", async (...sample) => {
         }
         // reinit global variables
         first_point_state = true;
-        for (var i=0; i<NDIMS; i++) {iirFilters[i].reinit();}
         stroke = [];
         speeds = [];
         unwrap.reset();
+        lowpass.reset();
         var res = await Max.outlet("reset_sg");
         return 0
     }
@@ -72,7 +67,7 @@ Max.addHandler("new_sample", async (...sample) => {
         // substract current position from first stroke point touchdown
         var rel_xyp = xyp_interp.map(function (num, idx) { return num-fp_values[idx] });
         // lowpass
-        var rel_xyp_lp = lowpass(rel_xyp);
+        var rel_xyp_lp = lowpass.lowpass(rel_xyp);
         // send to pipo
         var rel_xyp_lp_tosend = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
         var res = [sample_key].concat(rel_xyp_lp_tosend)
@@ -95,31 +90,6 @@ Max.addHandler("new_sample", async (...sample) => {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// low pass filtering
-var iirCalculator = new Fili.CalcCascades();
-var availableFilters = iirCalculator.available();
-var iirFilterCoeffs = iirCalculator.lowpass({
-    order: 3, // cascade 3 biquad filters (max: 12)
-    characteristic: 'butterworth',
-    Fs: 100, // sampling frequency
-    Fc: 10, // cutoff frequency / center frequency for bandpass, bandstop, peak
-  });
-//create a filter instance from the calculated coeffs
-var NDIMS = 3;
-var iirFilters = []
-for (var i=0; i<NDIMS; i++) {
-    iirFilters[i] = new Fili.IirFilter(iirFilterCoeffs);
-}
-function lowpass(sample) {
-    var filtered = [];
-    for (var i=0; i<NDIMS; i++) {
-        filtered[i] = iirFilters[i].singleStep(sample[i])
-    }
-    return filtered
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// perform SG filtering in pipo and get back results
 // receives the derivatives of xyp
 var stroke = [];
 var stroke_speed = [];
@@ -138,7 +108,6 @@ var sg_options = {
     pad: 'pre',
     padValue: 'replicate',
 };
-
 
 Max.addHandler("segment", async (...sample) => {
     cur_segment_len += 1;
@@ -201,38 +170,38 @@ async function new_segment() {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-async function compute_features(segment) {
-    // segment : [[t, x, y, p],...]
+// async function compute_features(segment) {
+//     // segment : [[t, x, y, p],...]
 
 
-    // var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
-    // var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
-    // var dA = SG(angle, 1, options);
-    // ADD pressure!!
-    // concat
-    var features = speed.map(function(num, idx) {return [num, dA[idx]]})
+//     // var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
+//     // var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
+//     // var dA = SG(angle, 1, options);
+//     // ADD pressure!!
+//     // concat
+//     var features = speed.map(function(num, idx) {return [num, dA[idx]]})
 
-    var res = [-1, -1];
-    if (segment.length > 10) {
-        var startTime = performance.now();
-        var res = compute_distance(features);
-        var endTime = performance.now();
-        Max.post("DTW", res, endTime - startTime);
-        var dtw = await Max.outlet("dtw", res[1]);
-    }
+//     var res = [-1, -1];
+//     if (segment.length > 10) {
+//         var startTime = performance.now();
+//         var res = compute_distance(features);
+//         var endTime = performance.now();
+//         Max.post("DTW", res, endTime - startTime);
+//         var dtw = await Max.outlet("dtw", res[1]);
+//     }
 
-    if (LOGGING_DATA) {
-        for (var i = 0; i < features.length; i++) {
-            var obj = {'sample_key': segment[i][0],
-                       's': features[i][0],
-                       'da': features[i][1],
-                       'segment_id': segment_id,
-                       'min_dtw': res[1],
-                       'min_dtw_id': res[0],
-                      };
-            var tmp = await Max.outlet("logging_feat", JSON.stringify(obj));
-        }
-    }
-}
+//     if (LOGGING_DATA) {
+//         for (var i = 0; i < features.length; i++) {
+//             var obj = {'sample_key': segment[i][0],
+//                        's': features[i][0],
+//                        'da': features[i][1],
+//                        'segment_id': segment_id,
+//                        'min_dtw': res[1],
+//                        'min_dtw_id': res[0],
+//                       };
+//             var tmp = await Max.outlet("logging_feat", JSON.stringify(obj));
+//         }
+//     }
+// }
 
 

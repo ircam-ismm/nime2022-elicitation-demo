@@ -1,7 +1,9 @@
 const Max = require('max-api');
 const nj = require('numjs');
+var Fili = require('fili');
+var DTW = require('dynamic-time-warping');
 
-var linear = require('everpolate').linear
+var Linear = require('everpolate').linear
 
 ////////////////////////////////////////////////////////////////////////////////
 // TIME INTERPOLATION
@@ -38,7 +40,7 @@ function ti_obj() {
 
         time_steps = nj.arange(starttime, endtime, this.stepsize);
         value_steps = values.map(function (element, index) {
-            return linear(time_steps.tolist(), [this.last_timestamp, timestamp], [this.last_values[index], element])},
+            return Linear(time_steps.tolist(), [this.last_timestamp, timestamp], [this.last_values[index], element])},
             this); //need to pass this to map
         value_steps = nj.array(value_steps).T.tolist();
         this.last_timestamp = timestamp
@@ -51,6 +53,42 @@ function ti_obj() {
         return res.slice(1)
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// LOW PASS FILTERING
+function lowpass() {
+    this.iirCalculator = new Fili.CalcCascades();
+    this.availableFilters = this.iirCalculator.available();
+    this.iirFilterCoeffs = this.iirCalculator.lowpass({
+        order: 3, // cascade 3 biquad filters (max: 12)
+        characteristic: 'butterworth',
+        Fs: 100, // sampling frequency
+        Fc: 10, // cutoff frequency / center frequency for bandpass, bandstop, peak
+        });
+
+    this.NDIMS = 3;
+    this.iirFilters = [];
+
+    this.reset = function() {
+        for (var i=0; i<this.NDIMS; i++) {this.iirFilters[i].reinit();}
+    }
+
+    this.init = function() {
+        for (var i=0; i<this.NDIMS; i++) {
+            this.iirFilters[i] = new Fili.IirFilter(this.iirFilterCoeffs);
+        }
+    }
+    //create a filter instance from the calculated coeffs
+    this.lowpass = function(sample) {
+        var filtered = [];
+        for (var i=0; i<this.NDIMS; i++) {
+            filtered[i] = this.iirFilters[i].singleStep(sample[i])
+        }
+        return filtered
+    }
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,6 +143,7 @@ function dtw_compute() {
 
 ////////////////////////////////////////////////////////////////////////////////
 // PHASE UNWRAP
+// behaves (hopefully) like np.unwrap on data stream.
 function unwrap () {
 
     this.unwrap_last = 0;
@@ -150,6 +189,7 @@ function db_obj() {
 
 
 module.exports = {
+    lowpass: lowpass,
     unwrap: unwrap,
     dtw_compute: dtw_compute,
     timeinterp: ti_obj,
