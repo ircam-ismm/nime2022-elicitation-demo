@@ -48,7 +48,7 @@ layout = [
         html.Div([
             dbc.Col([
                 dcc.Graph(id='fig-stats',),
-                dcc.Graph(id='fig-trace',),
+                dcc.Graph(id='fig-tmp',),
                 ]),
             ],
             style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'top'},
@@ -56,7 +56,7 @@ layout = [
 
         html.Div([
             dbc.Col([
-                dcc.Graph(id='fig-tmp',),
+                dcc.Graph(id='fig-trace',),
                 dcc.Graph(id='fig-speed',),
                 ]),
             ],

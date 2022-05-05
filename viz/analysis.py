@@ -92,7 +92,9 @@ def cb(emb, df):
     # compute color
     color=df.groupby('segment_id')['t0_norm'].mean()
 
-    emb['segment_id'] = np.arange(emb.shape[0])
+    # similar to list(set(df['segment_id']))
+    emb['segment_id'] = list(df.groupby(['segment_id']).groups.keys())
+
     fig = px.scatter(data_frame=emb, x='x', y='y',
                      color_continuous_scale='rdpu', color=color,
                      custom_data=['segment_id'])
@@ -126,9 +128,9 @@ def cb(xy, selected, df, emb):
     if selected is None:
         return dash.no_update
 
-    selected_ids = [p['pointIndex'] for p in selected['points']]
-
+    selected_ids = [p['customdata'][0] for p in selected['points']]
     selected_data = select(df, segment_id=selected_ids).copy()
+
     selected_data['ts_'] = 0
     def add_ts_(grp):
         grp['ts_'] = np.arange(grp.shape[0])
@@ -147,7 +149,7 @@ def cb(xy, selected, df, emb):
     fig = px.line(
         data_frame=selected_data, x=x, y=y, labels=labels,
         facet_col='segment_id', facet_col_wrap=4)
-    fig.layout.update(
+    fig.update_layout(
         title='Selection of segments displayed by {}'.format(xy),
         showlegend=False,
         autosize=False,
