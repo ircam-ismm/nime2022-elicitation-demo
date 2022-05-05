@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 422.0, 142.0, 1318.0, 999.0 ],
+		"rect" : [ 34.0, 87.0, 1318.0, 999.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -2353,7 +2353,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 422.0, 168.0, 1318.0, 973.0 ],
+						"rect" : [ 34.0, 113.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -2632,7 +2632,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 879.0, 4.0, 195.0, 22.0 ],
+									"patching_rect" : [ 879.0, 4.0, 370.0, 22.0 ],
 									"text" : "read ./data/unistroke/unistroke.json"
 								}
 
