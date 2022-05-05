@@ -3,6 +3,7 @@ const Max = require('max-api');
 const { performance } = require('perf_hooks');
 
 // package imports
+const nj = require('numjs');
 var SG = require('ml-savitzky-golay').default;
 // local imports
 var utils = require('./utils.js');
@@ -11,6 +12,7 @@ var timeinterp = new utils.timeinterp();
 var unwrap = new utils.unwrap();
 var lowpass = new utils.lowpass();
 lowpass.init();
+var dtw_compute = new utils.dtw_compute();
 
 // logging
 var LOGGING_DATA = true;
@@ -127,14 +129,14 @@ Max.addHandler("segment", async (...sample) => {
     }
     stroke_dangle.push(dangle);
 
-    Max.post("segment: ", stroke.length, speed);
+    // Max.post("segment: ", stroke.length, speed);
 
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
         var last_3 = stroke_speed.slice(-3);
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
-            Max.post("min: ", stroke.length, last_3[1]);
+            // Max.post("min: ", stroke.length, last_3[1]);
             if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (cur_segment_len > 50)) {
                 Max.post("SEGMENT !!!:", segment_id, stroke.length);
                 new_segment();
@@ -161,17 +163,28 @@ Max.addHandler("segment", async (...sample) => {
 var segment_id = 0;
 
 async function new_segment() {
-    // individual segment within a stroke
     segment_id += 1;
-    segment = stroke.slice(last_segment_end, cur_segment_len);
-    // compute_features(segment);
+
+    var speed = stroke_speed.slice(-cur_segment_len);
+    var dangle = stroke_dangle.slice(-cur_segment_len);
+    var features = speed.map(function(num, idx) {return [num, dangle[idx]]})
+
+    var res = [-1, -1, 0];
+    if (features.length > 10) {
+        var startTime = performance.now();
+        var res = dtw_compute.compute_distance(features);
+        var endTime = performance.now();
+        res[2] = endTime - startTime;
+
+        Max.post("compute_similarity", res);
+        var res = await Max.outlet("dtw", res[1]);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// function compute_similarity() {
 
-
-// async function compute_features(segment) {
-//     // segment : [[t, x, y, p],...]
+// }
 
 
 //     // var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
@@ -181,27 +194,6 @@ async function new_segment() {
 //     // concat
 //     var features = speed.map(function(num, idx) {return [num, dA[idx]]})
 
-//     var res = [-1, -1];
-//     if (segment.length > 10) {
-//         var startTime = performance.now();
-//         var res = compute_distance(features);
-//         var endTime = performance.now();
-//         Max.post("DTW", res, endTime - startTime);
-//         var dtw = await Max.outlet("dtw", res[1]);
-//     }
-
-//     if (LOGGING_DATA) {
-//         for (var i = 0; i < features.length; i++) {
-//             var obj = {'sample_key': segment[i][0],
-//                        's': features[i][0],
-//                        'da': features[i][1],
-//                        'segment_id': segment_id,
-//                        'min_dtw': res[1],
-//                        'min_dtw_id': res[0],
-//                       };
-//             var tmp = await Max.outlet("logging_feat", JSON.stringify(obj));
-//         }
-//     }
 // }
 
 

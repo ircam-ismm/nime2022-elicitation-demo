@@ -124,7 +124,7 @@ function dtw_compute() {
 
             for (key in this.models) {
                 var B = this.models[key];
-                var dtw = new DTW(A, B, distance_p1_2d);
+                var dtw = new DTW(A, B, this.distance_p1_2d);
                 var cur_dist = dtw.getDistance();
 
                 if (cur_dist < min_dist) {
@@ -132,7 +132,7 @@ function dtw_compute() {
                     min_dist = cur_dist;
                 }
             }
-            // store model
+            // TODO: store model only if min distance under threshold
             this.models[n_models] = A;
         }
         return [min_key, min_dist]

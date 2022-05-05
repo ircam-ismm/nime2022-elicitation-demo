@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 88.0, 87.0, 1318.0, 999.0 ],
+		"rect" : [ 88.0, 87.0, 1318.0, 1184.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -56,7 +56,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -130,7 +130,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -635,7 +635,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -709,7 +709,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -900,7 +900,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 88.0, 113.0, 1318.0, 973.0 ],
+						"rect" : [ 88.0, 113.0, 1318.0, 1158.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -971,7 +971,7 @@
 									"maxclass" : "newobj",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 1061.5, 446.0, 56.0, 22.0 ],
+									"patching_rect" : [ 1060.5, 502.349651336669922, 56.0, 22.0 ],
 									"text" : "s novelty"
 								}
 
@@ -1300,6 +1300,8 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
+										"node_bin_path" : "",
+										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -2140,7 +2142,9 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-35", 0 ],
-									"source" : [ "obj-45", 0 ]
+									"source" : [ "obj-45", 0 ],
+									"watchpoint_flags" : 5,
+									"watchpoint_id" : 2
 								}
 
 							}
@@ -2353,7 +2357,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -2617,7 +2621,7 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
-										"npm_bin_path" : "",
+										"node_bin_path" : "",
 										"watch" : 0
 									}
 ,
