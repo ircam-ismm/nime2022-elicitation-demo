@@ -13,7 +13,8 @@ var timeinterp = new utils.timeinterp();
 var unwrap = new utils.unwrap();
 var lowpass = new utils.lowpass();
 lowpass.init();
-var dtw_compute = new utils.dtw_compute();
+
+// var dtw_compute = new utils.dtw_compute();
 
 // logging
 var LOGGING_DATA = true;
@@ -24,7 +25,7 @@ var dtw_worker = require('./distance_model.js')
 dtw_worker.addListener(async function(res) {
     Max.post("cb", res);
     var out = await Max.outlet("logging_dtw", JSON.stringify(res));
-    var out = await Max.outlet("dtw", res['min_dtw']);
+    var out = await Max.outlet("dtw", res['min_dtw_pond']);
 });
 
 ////////////////////////////////////////////////////////////////////////////////

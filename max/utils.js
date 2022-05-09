@@ -1,7 +1,6 @@
 const Max = require('max-api');
 const nj = require('numjs');
 var Fili = require('fili');
-var DTW = require('dynamic-time-warping');
 
 var Linear = require('everpolate').linear
 
@@ -89,67 +88,6 @@ function lowpass() {
 }
 
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-// DTW COMPUTE
-// TODO: move to own process pool
-function dtw_compute() {
-
-    this.models = {};
-    this.keys_map = {};
-
-    this.distance_p1_2d = function (a, b) {
-        var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
-        var sum = diff.reduce((a, b) => a + b, 0);
-        return sum
-    }
-
-    this.compute_distance = function(segment_id, A) {
-        // Computes the minimum DTW distance of A against all previously recorded
-        // identified segments.
-        // Inputs:
-        //   A: a multidimensional equispaced time series.
-        // Returns:
-        //   The minimum DTW distance.
-
-        var min_key = 0;
-        var min_dist = 10000;
-
-        n_models = Object.keys(this.models).length;
-        // if no models yet, store series and return
-        if (n_models == 0) {
-            this.models[segment_id] = [A];
-        }
-        // else loop over all models and find closest
-        else {
-
-            for (key in this.models) {
-                var B = this.models[key];
-                // select one series among the group
-                var C = B[Math.floor(Math.random() * B.length)];
-
-                var dtw = new DTW(A, C, this.distance_p1_2d);
-                var cur_dist = dtw.getDistance();
-
-                if (cur_dist < min_dist) {
-                    min_key = key;
-                    min_dist = cur_dist;
-                }
-            }
-            // TODO: store model only if min distance under threshold
-            if (min_dist < 2) {
-                this.models[min_key].push(A);
-            }
-            else {
-                this.models[segment_id] = [A];
-            }
-        }
-        return [min_key, min_dist]
-    }
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // PHASE UNWRAP
 // behaves (hopefully) like np.unwrap on data stream.
@@ -200,7 +138,6 @@ function db_obj() {
 module.exports = {
     lowpass: lowpass,
     unwrap: unwrap,
-    dtw_compute: dtw_compute,
     timeinterp: ti_obj,
     debug_print: db_obj,
 }
