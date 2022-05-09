@@ -28,7 +28,7 @@ if __name__ == "__main__":
     SD = OSCData()
     dispatcher = dispatcher.Dispatcher()
     dispatcher.map("/data", SD.handle)
-    dispatcher.map("/feat", SD.handle)
+    dispatcher.map("/dtw", SD.handle)
 
     server = osc_server.ThreadingOSCUDPServer(
       (args.ip, args.port), dispatcher)
