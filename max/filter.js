@@ -51,8 +51,12 @@ Max.addHandler("new_sample", async (...sample) => {
         }
         // reinit global variables
         first_point_state = true;
+
         stroke = [];
-        speeds = [];
+        stroke_speed = [];
+        stroke_angle = [];
+        stroke_dangle = [];
+
         unwrap.reset();
         lowpass.reset();
         var res = await Max.outlet("reset_sg");
@@ -129,17 +133,16 @@ Max.addHandler("segment", async (...sample) => {
     }
     stroke_dangle.push(dangle);
 
-    // Max.post("segment: ", stroke.length, speed);
-
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
         var last_3 = stroke_speed.slice(-3);
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
             // Max.post("min: ", stroke.length, last_3[1]);
-            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (cur_segment_len > 50)) {
+            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 20)) || (cur_segment_len > 50)) {
                 Max.post("SEGMENT !!!:", segment_id, stroke.length);
                 new_segment();
+                segment_id += 1;
                 last_segment_end = cur_segment_len;
                 cur_segment_len = 0;
             }
@@ -163,7 +166,6 @@ Max.addHandler("segment", async (...sample) => {
 var segment_id = 0;
 
 async function new_segment() {
-    segment_id += 1;
 
     var speed = stroke_speed.slice(-cur_segment_len);
     var dangle = stroke_dangle.slice(-cur_segment_len);
@@ -172,28 +174,19 @@ async function new_segment() {
     var res = [-1, -1, 0];
     if (features.length > 10) {
         var startTime = performance.now();
-        var res = dtw_compute.compute_distance(features);
+        var res = dtw_compute.compute_distance(segment_id, features);
         var endTime = performance.now();
         res[2] = endTime - startTime;
 
+        var to_log_dtw = {'segment_id': segment_id, 'best_id': res[0], 'min_dtw': res[1], 'ct': res[2]}
+
+        var out = await Max.outlet("logging_dtw", JSON.stringify(to_log_dtw));
+        var out = await Max.outlet("dtw", res[1]);
         Max.post("compute_similarity", res);
-        var res = await Max.outlet("dtw", res[1]);
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// function compute_similarity() {
-
-// }
 
 
-//     // var speed = segment.map(x => 10 * Math.sqrt(Math.pow(x[1], 2) + Math.pow(x[2], 2)));
-//     // var angle = segment.map(x => Math.atan2(x[2], x[1])); // might need to unwrap
-//     // var dA = SG(angle, 1, options);
-//     // ADD pressure!!
-//     // concat
-//     var features = speed.map(function(num, idx) {return [num, dA[idx]]})
-
-// }
 
 

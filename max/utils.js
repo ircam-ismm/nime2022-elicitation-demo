@@ -93,9 +93,11 @@ function lowpass() {
 
 ////////////////////////////////////////////////////////////////////////////////
 // DTW COMPUTE
+// TODO: move to own process pool
 function dtw_compute() {
 
     this.models = {};
+    this.keys_map = {};
 
     this.distance_p1_2d = function (a, b) {
         var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
@@ -103,7 +105,7 @@ function dtw_compute() {
         return sum
     }
 
-    this.compute_distance = function(A) {
+    this.compute_distance = function(segment_id, A) {
         // Computes the minimum DTW distance of A against all previously recorded
         // identified segments.
         // Inputs:
@@ -117,13 +119,14 @@ function dtw_compute() {
         n_models = Object.keys(this.models).length;
         // if no models yet, store series and return
         if (n_models == 0) {
-            this.models[0] = [A];
+            this.models[segment_id] = [A];
         }
         // else loop over all models and find closest
         else {
 
             for (key in this.models) {
                 var B = this.models[key];
+                // select one series among the group
                 var C = B[Math.floor(Math.random() * B.length)];
 
                 var dtw = new DTW(A, C, this.distance_p1_2d);
@@ -139,13 +142,12 @@ function dtw_compute() {
                 this.models[min_key].push(A);
             }
             else {
-                this.models[n_models] = [A];
+                this.models[segment_id] = [A];
             }
         }
         return [min_key, min_dist]
     }
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
