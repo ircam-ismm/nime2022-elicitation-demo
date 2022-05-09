@@ -1,6 +1,7 @@
 const Max = require('max-api');
 
 const { performance } = require('perf_hooks');
+var cluster = require('cluster');
 
 // package imports
 const nj = require('numjs');
@@ -18,11 +19,25 @@ var dtw_compute = new utils.dtw_compute();
 var LOGGING_DATA = true;
 var to_log = {};
 
+var dtw_worker = require('./distance_model.js')
+
+dtw_worker.addListener(async function(res) {
+    Max.post("cb", res);
+    var out = await Max.outlet("logging_dtw", JSON.stringify(res));
+    var out = await Max.outlet("dtw", res['min_dtw']);
+});
+
 ////////////////////////////////////////////////////////////////////////////////
 // filter from incoming data source and send to pipo savgol
 var first_point_state = true;
 var fp_timestamp = 0;
 var fp_values = [];
+
+Max.addHandler("dtw_test", async () => {
+    Max.post("dtw_worker.worker", dtw_worker.worker);
+    Max.post("worker", dtw_worker.master.workers);
+});
+
 
 Max.addHandler("new_sample", async (...sample) => {
     // Expected format is
@@ -165,28 +180,17 @@ Max.addHandler("segment", async (...sample) => {
 
 var segment_id = 0;
 
+
 async function new_segment() {
 
     var speed = stroke_speed.slice(-cur_segment_len);
     var dangle = stroke_dangle.slice(-cur_segment_len);
     var features = speed.map(function(num, idx) {return [num, dangle[idx]]})
 
-    var res = [-1, -1, 0];
     if (features.length > 10) {
         var startTime = performance.now();
-        var res = dtw_compute.compute_distance(segment_id, features);
-        var endTime = performance.now();
-        res[2] = endTime - startTime;
-
-        var to_log_dtw = {'segment_id': segment_id, 'best_id': res[0], 'min_dtw': res[1], 'ct': res[2]}
-
-        var out = await Max.outlet("logging_dtw", JSON.stringify(to_log_dtw));
-        var out = await Max.outlet("dtw", res[1]);
-        Max.post("compute_similarity", res);
+        dtw_worker.processDtw({'msg':'test', 'now': startTime, 'segment_id':segment_id, 'features': features});
     }
 }
-
-
-
 
 

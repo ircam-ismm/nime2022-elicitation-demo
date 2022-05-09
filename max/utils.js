@@ -39,9 +39,9 @@ function ti_obj() {
         if ((endtime%this.stepsize)==0){endtime += 1;}
 
         time_steps = nj.arange(starttime, endtime, this.stepsize);
-        value_steps = values.map(function (element, index) {
+        value_steps = values.map((element, index) => {
             return Linear(time_steps.tolist(), [this.last_timestamp, timestamp], [this.last_values[index], element])},
-            this); //need to pass this to map
+            ); //need to pass this to map
         value_steps = nj.array(value_steps).T.tolist();
         this.last_timestamp = timestamp
         this.last_values = values

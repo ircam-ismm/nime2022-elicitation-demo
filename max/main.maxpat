@@ -56,7 +56,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -130,7 +130,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -635,7 +635,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -709,7 +709,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -900,7 +900,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 88.0, 113.0, 1318.0, 1158.0 ],
+						"rect" : [ 88.0, 139.0, 1318.0, 1132.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -930,6 +930,18 @@
 						"showontab" : 1,
 						"assistshowspatchername" : 0,
 						"boxes" : [ 							{
+								"box" : 								{
+									"id" : "obj-8",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 571.356460500000139, 134.349651336669922, 53.0, 22.0 ],
+									"text" : "dtw_test"
+								}
+
+							}
+, 							{
 								"box" : 								{
 									"id" : "obj-1",
 									"maxclass" : "message",
@@ -1718,6 +1730,13 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-39", 0 ],
+									"source" : [ "obj-8", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-39", 0 ],
 									"source" : [ "obj-9", 0 ]
 								}
 
@@ -1873,7 +1892,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1158.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
