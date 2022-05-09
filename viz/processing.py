@@ -47,8 +47,8 @@ layout = [
 
         html.Div([
             dbc.Col([
-                dcc.Graph(id='fig-stats',),
-                dcc.Graph(id='fig-tmp',),
+                dcc.Graph(id='fig-hist-speed',),
+                dcc.Graph(id='fig-hist-pressure',),
                 ]),
             ],
             style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'top'},
@@ -127,7 +127,7 @@ def cb(df):
     mms = skprep.MinMaxScaler(feature_range=(10, 80))
     p_scaled = mms.fit_transform(df['p'].values.reshape(-1,1)).reshape(-1)
 
-    fig = px.scatter(data_frame=df, x='x', y='y', custom_data=['stroke_id'], opacity=0.05,)
+    fig = px.scatter(data_frame=df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=0.05,)
     fig.update_traces(marker=dict(color='black', size=p_scaled))
 
     mms_json = mms_to_json(mms)
@@ -154,12 +154,12 @@ def cb(df, fig_a, sk_data, numinput):
 
     if stroke_df.shape[0] > 0:
         p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
-        fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id'], opacity=1)
+        fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=1)
         fig_b.update_traces(marker=dict(size=p_scaled))
 
     fig = go.Figure(data=fig_a.data + fig_b.data)
     fig.update_traces(
-        hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
+        hovertemplate="ID:%{customdata[0]} <br>p:%{customdata[1]:.2f}<extra></extra>"
         )
     fig.layout.update(
         title='Position (x, y) of all touch points with stroke {} in blue.'.format(numinput),
@@ -251,7 +251,7 @@ def cb(df, numinput):
 
 
 @callback(
-    Output('fig-stats', 'figure'),
+    Output('fig-hist-speed', 'figure'),
     Input('data-store-file', 'data'),
     prevent_initial_call=True,
     )
@@ -274,12 +274,12 @@ def cb(df):
 
 
 @callback(
-    Output('fig-tmp', 'figure'),
+    Output('fig-hist-pressure', 'figure'),
     Input('data-store-file', 'data'),
     prevent_initial_call=True,
     )
 def cb(df):
-    """Display the histogram of speed in the whole dataset.
+    """Display the histogram of pressure in the whole dataset.
     """
     fig = px.histogram(df, x='p')
     fig.layout.update(
