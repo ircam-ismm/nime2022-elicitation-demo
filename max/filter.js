@@ -25,7 +25,13 @@ var dtw_worker = require('./distance_model.js')
 dtw_worker.addListener(async function(res) {
     Max.post("cb", res);
     var out = await Max.outlet("logging_dtw", JSON.stringify(res));
-    var out = await Max.outlet("dtw", res['min_dtw_pond']);
+
+    var feedback = 0;
+    if (res['segment_id'] == res['best_id']) {
+        feedback = 10;
+    }
+
+    var out = await Max.outlet("dtw", feedback);
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,7 +164,6 @@ Max.addHandler("segment", async (...sample) => {
             if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 20)) || (cur_segment_len > 50)) {
                 Max.post("SEGMENT !!!:", segment_id, stroke.length);
                 new_segment();
-                segment_id += 1;
                 last_segment_end = cur_segment_len;
                 cur_segment_len = 0;
             }
@@ -192,6 +197,7 @@ async function new_segment() {
         var startTime = performance.now();
         dtw_worker.processDtw({'msg':'test', 'now': startTime, 'segment_id':segment_id, 'features': features});
     }
+    segment_id += 1;
 }
 
 

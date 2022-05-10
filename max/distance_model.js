@@ -13,6 +13,7 @@ const { performance } = require('perf_hooks');
 
 ////////////////////////////////////////////////////////////////////////////////
 // DTW COMPUTE
+var DTW_THRESHOLD = 5;
 class DtwCompute {
 
     models = {};
@@ -45,6 +46,9 @@ class DtwCompute {
         else {
 
             for (var key in this.models) {
+
+                // console.log("models:", key);
+
                 var B = this.models[key];
                 // select one series among the group
                 var C = B[Math.floor(Math.random() * B.length)];
@@ -54,20 +58,24 @@ class DtwCompute {
 
                 var cur_dist_pond = 2*cur_dist / (A.length + C.length);
 
-                if (cur_dist_pond < min_dist) {
+                if (cur_dist < min_dist) {
                     min_key = key;
                     min_dist = cur_dist;
                     min_dist_pond = cur_dist_pond;
                 }
             }
-            // TODO: store model only if min distance under threshold
-            if (min_dist < 2) {
+
+            // store model only if min distance under threshold
+            if (min_dist < DTW_THRESHOLD) {
+                min_key = parseInt(min_key);
                 this.models[min_key].push(A);
             }
             else {
+                min_key = segment_id;
                 this.models[segment_id] = [A];
             }
         }
+
         return [min_key, min_dist, min_dist_pond]
     }
 }
@@ -92,7 +100,7 @@ function addListener(func) {
 
 if (cluster.isPrimary) {
     function messageHandler(dtwResult) {
-        console.log(dtwResult);
+        // console.log(dtwResult);
         listeners.forEach(func => func(dtwResult));
     }
 

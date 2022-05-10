@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 88.0, 87.0, 1318.0, 1184.0 ],
+		"rect" : [ 34.0, 87.0, 1318.0, 999.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -56,7 +56,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -130,7 +130,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -635,7 +635,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -709,7 +709,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -820,8 +820,8 @@
 									"numinlets" : 5,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 482.221058964729309, 294.65384978055954, 102.0, 22.0 ],
-									"text" : "zmap 1. 4. -60. 0."
+									"patching_rect" : [ 482.221058964729309, 294.65384978055954, 109.0, 22.0 ],
+									"text" : "zmap 1. 10. -60. 0."
 								}
 
 							}
@@ -900,7 +900,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 88.0, 139.0, 1318.0, 1132.0 ],
+						"rect" : [ 34.0, 113.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -1550,9 +1550,7 @@
 								"patchline" : 								{
 									"destination" : [ "obj-13", 0 ],
 									"order" : 0,
-									"source" : [ "obj-30", 0 ],
-									"watchpoint_flags" : 5,
-									"watchpoint_id" : 3
+									"source" : [ "obj-30", 0 ]
 								}
 
 							}
@@ -1892,7 +1890,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 1132.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
