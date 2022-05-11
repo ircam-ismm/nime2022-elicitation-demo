@@ -34,7 +34,7 @@ dtw_worker.addListener(async function(res) {
 
     dtw_values.push(res['min_dtw']);
 
-    var out = await Max.outlet("dtw", feedback);
+    var out = await Max.outlet("dtw", res['min_dtw_pond']);
 });
 
 
@@ -129,7 +129,7 @@ var stroke_dangle = [];
 var cur_segment_len = 0;
 var last_segment_end = 0;
 
-var SPEED_THRESHOLD = 1.0;
+var SPEED_THRESHOLD = 0.5;
 var SG_WINDOW_SIZE = 5;
 
 var sg_options = {
@@ -160,10 +160,12 @@ Max.addHandler("segment", async (...sample) => {
     // find extrema over the last three recorded points
     if (stroke.length > 3) {
         var last_3 = stroke_speed.slice(-3);
+
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
+
             // Max.post("min: ", stroke.length, last_3[1]);
-            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 20)) || (cur_segment_len > 50)) {
+            if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 20)) || (cur_segment_len > 120)) {
                 Max.post("SEGMENT !!!:", segment_id, stroke.length);
                 new_segment();
                 last_segment_end = cur_segment_len;
