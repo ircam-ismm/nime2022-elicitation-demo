@@ -6,21 +6,22 @@ var cluster = require('cluster');
 // package imports
 const nj = require('numjs');
 var SG = require('ml-savitzky-golay').default;
+var computeHistogram = require( 'compute-histogram' );
+
 // local imports
 var utils = require('./utils.js');
-// utils functions
-var timeinterp = new utils.timeinterp();
-var unwrap = new utils.unwrap();
-var lowpass = new utils.lowpass();
-lowpass.init();
-
-// var dtw_compute = new utils.dtw_compute();
+var dtw_worker = require('./distance_model.js')
 
 // logging
 var LOGGING_DATA = true;
 var to_log = {};
 
-var dtw_worker = require('./distance_model.js')
+
+////////////////////////////////////////////////////////////////////////////////
+// DTW callback
+
+var DTW_HIST_FREQ = 10;
+var dtw_values = [];
 
 dtw_worker.addListener(async function(res) {
     Max.post("cb", res);
@@ -31,8 +32,11 @@ dtw_worker.addListener(async function(res) {
         feedback = 10;
     }
 
+    dtw_values.push(res['min_dtw']);
+
     var out = await Max.outlet("dtw", feedback);
 });
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // filter from incoming data source and send to pipo savgol
@@ -40,11 +44,9 @@ var first_point_state = true;
 var fp_timestamp = 0;
 var fp_values = [];
 
-Max.addHandler("dtw_test", async () => {
-    Max.post("dtw_worker.worker", dtw_worker.worker);
-    Max.post("worker", dtw_worker.master.workers);
-});
-
+var lowpass = new utils.Lowpass();
+var timeinterp = new utils.TimeInterpolation();
+var unwrap = new utils.Unwrap();
 
 Max.addHandler("new_sample", async (...sample) => {
     // Expected format is
