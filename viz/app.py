@@ -18,14 +18,16 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
-# external_stylesheets = [dbc.themes.BOOTSTRAP]
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+FONT_AWESOME = "https://use.fontawesome.com/releases/v5.13.0/css/all.css"
+external_stylesheets = [dbc.themes.BOOTSTRAP, FONT_AWESOME]
+# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = DashProxy(__name__, external_stylesheets=external_stylesheets,
-                          transforms=[ServersideOutputTransform(),])
+                          transforms=[ServersideOutputTransform(), NoOutputTransform()])
 
 app.layout = html.Div(
     # DATASTORES
     [
+    dcc.Store(id='data-store-register'),
     dcc.Store(id='data-store-fig-all'),
     dcc.Store(id='data-store-sk'),
     dcc.Store(id='data-store-file'),

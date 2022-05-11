@@ -31,9 +31,9 @@ layout = [
 
         html.Div([
             html.Div([daq.NumericInput(id='button-stroke-id', label='stroke:', value=0, min=0, max=1e3),],
-                     className='one columns'),
+                     className='col-1'),
             html.Div([daq.NumericInput(id='button-segment-id', label='segment:',value=-1, min=0, max=1e3),],
-                     className='one columns'),
+                     className='col-1'),
             ],
         className='row'),
 

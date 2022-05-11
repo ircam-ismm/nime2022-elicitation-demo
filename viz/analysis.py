@@ -11,7 +11,9 @@ from dash_extensions.enrich import html, dcc
 from dash_extensions.enrich import DashProxy, ServersideOutput, ServersideOutputTransform
 from dash_extensions.enrich import callback
 from dash.exceptions import PreventUpdate
+
 import dash
+import dash_bootstrap_components as dbc
 
 import plotly.graph_objs as go
 import plotly.express as px
@@ -39,7 +41,7 @@ layout = [
         ),
 
         html.Div([
-            html.Button(id='button_id', children='Embed!'),
+            dbc.Button(id='button_id', children='Embed!'),
         ],
         style={'width': '100%', 'display': 'inline-block'}
         ),
