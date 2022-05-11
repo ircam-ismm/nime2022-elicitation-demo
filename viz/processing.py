@@ -174,15 +174,20 @@ def cb(df, fig_a, sk_data, numinput):
 
 @callback(
     Output('fig-trace', 'figure'),
+    Input('fig-speed', 'relayoutData'),
     Input('data-store-file', 'data'),
     Input('data-store-sk', 'data'),
     Input('button-stroke-id', 'value'),
     )
-def cb(df, sk_data, numinput):
+def cb(layout_data, df, sk_data, numinput):
     """Display a single stroke (x, y) with its segments coloured individually.
     """
     if sk_data is None:
         return dash.no_update
+
+    if layout_data is not None:
+        tmin = layout_data.get('xaxis.range[0]', None)
+        tmax = layout_data.get('xaxis.range[1]', None)
 
     stroke_i = select(df, stroke_id=numinput).copy()
 
@@ -191,9 +196,14 @@ def cb(df, sk_data, numinput):
         stroke_i['size'] = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
         stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
 
+        if (tmin and tmax):
+            subset = stroke_i[(stroke_i['ts'] > tmin) & (stroke_i['ts'] < tmax)]
+        else:
+            subset = stroke_i
+
         fig = px.scatter(
-                data_frame=stroke_i, x='x', y='y', color='color', size='size',
-                custom_data=['segment_id']
+                data_frame=subset, x='x', y='y', color='color', size='size',
+                custom_data=['segment_id'], color_discrete_map='identity',
                 )
 
     fig = go.Figure(data=fig.data)
@@ -230,7 +240,7 @@ def cb(df, numinput):
 
         fig = px.scatter(
                 data_frame=stroke_i, x='ts', y='s', color='color',
-                custom_data=['segment_id']
+                custom_data=['segment_id'], color_discrete_map='identity',
                 )
 
     fig = go.Figure(data=fig.data)

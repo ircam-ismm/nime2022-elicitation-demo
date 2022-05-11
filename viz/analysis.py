@@ -53,7 +53,7 @@ layout = [
 ################################################################################
 # CALLBACKS
 @callback(
-    ServersideOutput('data-store-embedding', 'data', session_check=False, arg_check=False),
+    ServersideOutput('data-store-embedding', 'data', session_check=True, arg_check=False),
     Input('button_id', 'n_clicks'),
     State('data-store-file', 'data'),
     prevent_initial_call=True,
