@@ -21,7 +21,7 @@ layout = [
     # io
     dcc.Upload(
         id='upload-data',
-        children=html.Div(['Drag and Drop or ',html.A('Select a File')]),
+        children=html.Div(['Drag and Drop or ',html.A('Select File(s)')]),
         style={
             'width': '100%',
             'height': '60px',
@@ -40,7 +40,7 @@ layout = [
     html.Hr(),
     ]
 
-
+import json
 ################################################################################
 # CALLBACK
 # https://www.dash-extensions.com/transforms/serverside-output-transform
@@ -49,126 +49,71 @@ layout = [
     ServersideOutput('data-store-file', 'data', arg_check=False),
     Output('data-store-small', 'data'),
     Output('data-store-register', 'data'),
+    Output('upload-summary', 'children'),
 
+    Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
     Input('upload-data', 'contents'),
 
     State('upload-data', 'filename'),
     State('upload-data', 'last_modified'),
+
     State('data-store-register', 'data'),
+    State('data-store-file', 'data'),
+    State('data-store-small', 'data'),
+    State('upload-summary', 'children'),
+
     prevent_initial_call=True,
     )
-def upload_data(list_of_contents, list_of_names, list_of_dates, register):
+def cb(close, list_of_contents, list_of_names, list_of_dates, register, data_file, small_data, cards):
 
-    print('list_of_names', list_of_names)
+    if small_data == None: small_data = {}
+    if data_file == None: data_file = {}
 
-    # keep track of uploaded files
-    if register is None:
-        register = {}
-        register['data'] = []
-
-    #     register['n_files'] = 1
-    # else:
-    #     register['n_files'] += 1
-    # n_files = register['n_files']
-
-    # produce content
-    if list_of_contents is None:
-        return dash.no_update
-    else:
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)
-            ]
-        # we assume only one file dropped at a time
-        data_df, small_data = children[0]
-
-        filename = list_of_names[0]
-        register['data'] = register['data']+[{'filename': filename}]
-        register['current'] = filename
-
-        return data_df, small_data, register
-
-@callback(
-    Output('upload-summary', 'children'),
-
-    Input('data-store-file', 'data'),
-    Input('data-store-register', 'data'),
-
-    Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
-    State({'type': 'close-button', 'index': ALL}, 'id'),
-
-    State('upload-summary', 'children'),
-    )
-def cb(data_df, register, a, b, cards):
 
     ctx = dash.callback_context
+    close_button_trigger = 'close-button' in ctx.triggered[0]['prop_id']
 
-    print("make cards", register, ctx.triggered)
+    # remove dataset
+    if close_button_trigger:
+        button_id, _ = ctx.triggered[0]['prop_id'].split('.')
+        button_id = json.loads(button_id)
+        index_to_remove = button_id['index']
 
-    # on page load
-    if data_df is None:
-        return dash.no_update
-        # summary = html.Div([html.H5('No data, upload a file using the box above.')])
-        # return [summary]
+        # remove data from cards and data_file
+        children = [child for child in cards
+            if child['props']['id']['index'] != index_to_remove]
+        del data_file[index_to_remove]
 
-    # add a new file
-    prop_ids = [i['prop_id'] for i in ctx.triggered]
-    if any([(i in prop_ids) for i in ['data-store-file.data', 'data-store-register.data']]):
+        print(close_button_trigger, cards, small_data, data_file)
 
-        filename = register['current']
-        obj = [i for i in register['data'] if i['filename'] == filename][0]
-        n_files = len(register['data'])
+        return data_file, None, register, children
 
-        card = make_card(obj['filename'], data_df, n_files)
-        new_cards = cards+[card]
-        return new_cards
+    # file dropped
+    if (not close_button_trigger) and (list_of_contents is not None):
 
-    else:
-        button_id, _ = ctx.triggered[0]["prop_id"].split(".")
-        print('ctx', ctx, button_id)
+        contents = []
+        for c, n, d in zip(list_of_contents, list_of_names, list_of_dates):
+            contents.append(parse_contents(c, n, d))
 
-        return []
+        updated_cards = cards
+        for i, content in enumerate(contents):
 
-    # if any([(i in prop_ids) for i in ['data-store-file.data', 'data-store-register.data']]):
-    # remove a file
+            data_df, small_data = content
+            filename = list_of_names[i]
+            register, card_id = r_add_new_file(register)
+            card = make_card(filename, data_df, card_id)
+            updated_cards += [card]
+            data_file[card_id] = data_df
 
-
-
-# @callback(
-#     Input('data-store-register', 'data')
-#     )
-# def func(data):
-#     print('data-store-register', data)
+        return data_file, None, register, updated_cards
 
 
-# @callback(
-#     Output('upload-summary', 'children'),
-#     Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
-#     State({'type': 'close-button', 'index': ALL}, 'id'),
-#     State('upload-summary', 'children'),
-#     )
-# def cb(a, b, children):
-#     print(a, b)
+def r_add_new_file(register):
+    card_id = register.setdefault('new_id', 0)
+    register['new_id'] += 1
+    return register, card_id
 
-#     ctx = dash.callback_context
 
-#     if not ctx.triggered:
-#         return dash.no_update
-
-#     else:
-#         button_id, _ = ctx.triggered[0]["prop_id"].split(".")
-
-#         print('ctx', ctx, button_id)
-
-#         button_id = json.loads(button_id)
-#         index_to_remove = button_id["index"]
-#         children = [
-#             child
-#             for child in children
-#             if child["props"]["id"]["index"] != index_to_remove
-#         ]
-
-#         return children
 
 
 ################################################################################
@@ -177,18 +122,14 @@ def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
-        if 'csv' in filename:
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-            df.columns = [0, 'source', 'data']
+        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+        df.columns = [0, 'source', 'data']
     except Exception as e:
         print(e)
-        return html.Div([
-            """There was an error processing this file. Use pandas dataframes
-            saved to disk as csv."""
-        ])
+        error_msg = """There was an error processing this file. Use pandas dataframes
+        saved to disk as csv."""
+        return html.Div([error_msg])
 
-    # file data, small data, summary card
     data_df = format_from_df(df, source='/data')
     small_data = parse_small_data(data_df)
 
@@ -227,6 +168,7 @@ def make_card(filename, data_df, card_id):
     c, d = min(segment_id_list), max(segment_id_list)
     table_data = [
     ['filename', filename],
+    ['card_id', card_id],
     ['lines', str(data_df.shape[0])],
     ['stroke_id', str(a)+' ... '+str(b)],
     ['segment_id', str(c)+' ... '+str(d)],
@@ -255,9 +197,8 @@ def make_card(filename, data_df, card_id):
                 ]),
             ]),
         ],
-        # id={"type": "card", "index": 1},
+        id={'type': 'card', 'index': card_id},
         style={'width': '400px', 'display': 'inline-block'},
-        # className="mb-3 mx-auto",
     )
 
     return card
@@ -267,4 +208,87 @@ def make_card(filename, data_df, card_id):
 
 
 
+# @callback(
+#     # Output('upload-summary', 'children'),
 
+#     Input('data-store-file', 'data'),
+#     Input('data-store-register', 'data'),
+
+#     Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
+#     State({'type': 'close-button', 'index': ALL}, 'id'),
+
+#     State('upload-summary', 'children'),
+#     )
+# def cb(data_df, register, a, b, cards):
+
+#     ctx = dash.callback_context
+
+#     print("make cards", register, ctx.triggered)
+
+#     # on page load
+#     if data_df is None:
+#         return dash.no_update
+#         # summary = html.Div([html.H5('No data, upload a file using the box above.')])
+#         # return [summary]
+
+#     # add a new file
+#     prop_ids = [i['prop_id'] for i in ctx.triggered]
+#     if any([(i in prop_ids) for i in ['data-store-file.data', 'data-store-register.data']]):
+
+#         filename = register['current']
+#         obj = [i for i in register['data'] if i['filename'] == filename][0]
+#         n_files = len(register['data'])
+
+#         card = make_card(obj['filename'], data_df, n_files)
+#         new_cards = cards+[card]
+#         return new_cards
+
+#     else:
+#         button_id, _ = ctx.triggered[0]["prop_id"].split(".")
+#         print('ctx', ctx, button_id)
+
+#         return []
+
+#     # if any([(i in prop_ids) for i in ['data-store-file.data', 'data-store-register.data']]):
+#     # remove a file
+
+
+
+
+
+
+# @callback(
+#     Input('data-store-register', 'data')
+#     )
+# def func(data):
+#     print('data-store-register', data)
+
+
+# @callback(
+#     Output('upload-summary', 'children'),
+#     Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
+#     State({'type': 'close-button', 'index': ALL}, 'id'),
+#     State('upload-summary', 'children'),
+#     )
+# def cb(a, b, children):
+#     print(a, b)
+
+#     ctx = dash.callback_context
+
+#     if not ctx.triggered:
+#         return dash.no_update
+
+#     else:
+#         button_id, _ = ctx.triggered[0]["prop_id"].split(".")
+
+#         print('ctx', ctx, button_id)
+
+#         button_id = json.loads(button_id)
+#         index_to_remove = button_id["index"]
+#         children = [
+#             child
+#             for child in children
+#             if child["props"]["id"]["index"] != index_to_remove
+#         ]
+
+#         return children

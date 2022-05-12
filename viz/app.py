@@ -27,10 +27,10 @@ app = DashProxy(__name__, external_stylesheets=external_stylesheets,
 app.layout = html.Div(
     # DATASTORES
     [
-    dcc.Store(id='data-store-register'),
+    dcc.Store(id='data-store-register', data={}),
+    dcc.Store(id='data-store-file'),
     dcc.Store(id='data-store-fig-all'),
     dcc.Store(id='data-store-sk'),
-    dcc.Store(id='data-store-file'),
     dcc.Store(id='data-store-embedding'),
     dcc.Store(id='data-store-small'),
     ]+\
