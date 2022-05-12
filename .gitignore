@@ -5,8 +5,9 @@
 # data
 data/test
 
-# js test
+# test and trash
 jstest
+trash
 
 # js files
 max/node_modules
