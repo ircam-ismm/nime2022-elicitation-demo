@@ -19,12 +19,6 @@ class DtwCompute {
     models = {};
     keys_map = {};
 
-    distance_p1_2d(a, b) {
-        var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
-        var sum = diff.reduce((a, b) => a + b, 0);
-        return sum
-    }
-
     compute_distance(segment_id, A) {
         // Computes the minimum DTW distance of A against all previously recorded
         // identified segments.
@@ -53,7 +47,7 @@ class DtwCompute {
                 // select one series among the group
                 var C = B[Math.floor(Math.random() * B.length)];
 
-                var dtw = new DTW(A, C, this.distance_p1_2d);
+                var dtw = new DTW(A, C, distance_fun);
                 var cur_dist = dtw.getDistance();
 
                 var cur_dist_pond = 2*cur_dist / (A.length + C.length);
@@ -80,10 +74,19 @@ class DtwCompute {
     }
 }
 
+
+function distance_fun(a, b) {
+    // compute L1 between two arrays a and b
+    var diff = a.map(function (i,j) {return Math.abs(i - b[j])});
+    var sum = diff.reduce((a, b) => a + b, 0);
+    return sum
+}
+
+
 dtwCompute = new DtwCompute();
 
 ////////////////////////////////////////////////////////////////////////////////
-// PROCESS COMPUTE
+// COMMUNICATION INTERFACE
 function processDtw(inputData) {
     if (cluster.isPrimary) {
         for (const id in cluster.workers) {

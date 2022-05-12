@@ -24,8 +24,8 @@ var DTW_HIST_FREQ = 10;
 var dtw_values = [];
 
 dtw_worker.addListener(async function(res) {
-    Max.post("cb", res);
-    var out = await Max.outlet("logging_dtw", JSON.stringify(res));
+    Max.post('cb', res);
+    var out = await Max.outlet('logging_dtw', JSON.stringify(res));
 
     var feedback = 0;
     if (res['segment_id'] == res['best_id']) {
@@ -34,7 +34,7 @@ dtw_worker.addListener(async function(res) {
 
     dtw_values.push(res['min_dtw']);
 
-    var out = await Max.outlet("dtw", res['min_dtw_pond']);
+    var out = await Max.outlet('dtw', res['min_dtw_pond']);
 });
 
 
@@ -48,7 +48,7 @@ var lowpass = new utils.Lowpass();
 var timeinterp = new utils.TimeInterpolation();
 var unwrap = new utils.Unwrap();
 
-Max.addHandler("new_sample", async (...sample) => {
+Max.addHandler('new_sample', async (...sample) => {
     // Expected format is
     // sample: t, stroke_id, touch, finger_id, _, x, y, p
 
@@ -63,13 +63,13 @@ Max.addHandler("new_sample", async (...sample) => {
 
     // detect stroke segmentation
     if (touching && first_point_state) { // first point
-        Max.post("FIRST POINT");
+        Max.post('FIRST POINT');
         first_point_state = false;
         fp_timestamp = timestamp;
         fp_values = xyp;
     }
     if (!touching) { // last point
-        Max.post("LAST POINT");
+        Max.post('LAST POINT');
         if (stroke.length > 10) {
             new_segment(); // send the last recorded data as a new segment
         }
@@ -83,7 +83,7 @@ Max.addHandler("new_sample", async (...sample) => {
 
         unwrap.reset();
         lowpass.reset();
-        var res = await Max.outlet("reset_sg");
+        var res = await Max.outlet('reset_sg');
         return 0
     }
 
@@ -92,7 +92,7 @@ Max.addHandler("new_sample", async (...sample) => {
     // loop over interpolated samples
     for (index in sample_interp) {
         var timestamp_interp = sample_interp[index][0];
-        var sample_key = timestamp.toString() + "_" + timestamp_interp.toString();
+        var sample_key = timestamp.toString() + '_' + timestamp_interp.toString();
         var xyp_interp = sample_interp[index].slice(-3);
         // substract current position from first stroke point touchdown
         var rel_xyp = xyp_interp.map(function (num, idx) { return num-fp_values[idx] });
@@ -101,7 +101,7 @@ Max.addHandler("new_sample", async (...sample) => {
         // send to pipo
         var rel_xyp_lp_tosend = rel_xyp_lp.map(function (num, idx) {return num.toFixed(10)});
         var res = [sample_key].concat(rel_xyp_lp_tosend)
-        var res = await Max.outlet("lowpass", res.join(" "));
+        var res = await Max.outlet('lowpass', res.join(' '));
 
         if (LOGGING_DATA) {
             to_log[sample_key] = {'sample_key': sample_key,
@@ -139,7 +139,7 @@ var sg_options = {
     padValue: 'replicate',
 };
 
-Max.addHandler("segment", async (...sample) => {
+Max.addHandler('segment', async (...sample) => {
     cur_segment_len += 1;
     stroke.push(sample);
 
@@ -164,10 +164,10 @@ Max.addHandler("segment", async (...sample) => {
         // local minimum
         if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
 
-            // Max.post("min: ", stroke.length, last_3[1]);
+            // Max.post('min: ', stroke.length, last_3[1]);
             if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 20)) || (cur_segment_len > 120)) {
-                Max.post("SEGMENT !!!:", segment_id, stroke.length);
-                new_segment();
+                Max.post('SEGMENT !!!:', segment_id, stroke.length);
+                new_segment(sample_key);
                 last_segment_end = cur_segment_len;
                 cur_segment_len = 0;
             }
@@ -184,17 +184,27 @@ Max.addHandler("segment", async (...sample) => {
         obj['angle'] = angle;
         obj['da'] = dangle;
         obj['segment_id'] = segment_id;
-        var res = await Max.outlet("logging_data", JSON.stringify(obj));
+        var res = await Max.outlet('logging_data', JSON.stringify(obj));
     }
 });
 
 var segment_id = 0;
 
 
-async function new_segment() {
+async function new_segment(sample_key) {
+
+    var obj = to_log[sample_key];
+    if (obj == undefined) {
+        return 0
+    }
+    else {
+        var pressure = obj['rel_xyp_lp'][2];
+        Max.post('PRESSURE', pressure);
+    }
 
     var speed = stroke_speed.slice(-cur_segment_len);
     var dangle = stroke_dangle.slice(-cur_segment_len);
+
     var features = speed.map(function(num, idx) {return [num, dangle[idx]]})
 
     if (features.length > 10) {
