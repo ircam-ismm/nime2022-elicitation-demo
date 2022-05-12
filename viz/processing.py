@@ -30,6 +30,8 @@ layout = [
     html.Div(id='processing-layout', children=[
 
         html.Div([
+            html.Div([daq.NumericInput(id='button-card-id', label='card:', value=0, min=0, max=1e3),],
+                     className='col-1'),
             html.Div([daq.NumericInput(id='button-stroke-id', label='stroke:', value=0, min=0, max=1e3),],
                      className='col-1'),
             html.Div([daq.NumericInput(id='button-segment-id', label='segment:',value=-1, min=0, max=1e3),],
@@ -72,97 +74,122 @@ layout = [
 
 ################################################################################
 # CALLBACKS
-@callback(
-    Output('button-stroke-id', 'min'),
-    Output('button-stroke-id', 'max'),
-    Input('data-store-small', 'data'),
-    prevent_initial_call=True
-    )
-def cb(small_data):
-    """Set the range for stroke selection based on stroke ids in the data.
-    """
-    stroke_id_list = np.array(small_data['stroke_id_list'])
-    return stroke_id_list.min(), stroke_id_list.max()
+# @callback(
+#     Output('button-stroke-id', 'min'),
+#     Output('button-stroke-id', 'max'),
+#     Input('data-store-small', 'data'),
+#     prevent_initial_call=True
+#     )
+# def cb(small_data):
+#     """Set the range for stroke selection based on stroke ids in the data.
+#     """
+#     stroke_id_list = np.array(small_data['stroke_id_list'])
+#     return stroke_id_list.min(), stroke_id_list.max()
 
-@callback(
-    Output('button-segment-id', 'min'),
-    Output('button-segment-id', 'max'),
-    Input('data-store-small', 'data'),
-    prevent_initial_call=True
-    )
-def cb(small_data):
-    """Set the range for segment selection based on segment ids in the data.
-    """
-    segment_id_list = np.array(small_data['segment_id_list'])
-    return segment_id_list.min(), segment_id_list.max()
+# @callback(
+#     Output('button-segment-id', 'min'),
+#     Output('button-segment-id', 'max'),
+#     Input('data-store-small', 'data'),
+#     prevent_initial_call=True
+#     )
+# def cb(small_data):
+#     """Set the range for segment selection based on segment ids in the data.
+#     """
+#     segment_id_list = np.array(small_data['segment_id_list'])
+#     return segment_id_list.min(), segment_id_list.max()
 
-@callback(
-    Output('button-stroke-id', 'value'),
-    Input('button-segment-id', 'value'),
-    Input('data-store-small', 'data'),
-    prevent_initial_call=True
-    )
-def cb(numinput, small_data):
-    """Set the stroke id from a segment id selection or on page load.
-    """
-    if numinput != -1:
-        segment_stroke_map = small_data['segment_stroke_map']
-        stroke_id = segment_stroke_map[str(numinput)]
-    else:
-        stroke_id_list = np.array(small_data['stroke_id_list'])
-        stroke_id = stroke_id_list.min()
+# @callback(
+#     Output('button-stroke-id', 'value'),
+#     Input('button-segment-id', 'value'),
+#     Input('data-store-small', 'data'),
+#     prevent_initial_call=True
+#     )
+# def cb(numinput, small_data):
+#     """Set the stroke id from a segment id selection or on page load.
+#     """
+#     if numinput != -1:
+#         segment_stroke_map = small_data['segment_stroke_map']
+#         stroke_id = segment_stroke_map[str(numinput)]
+#     else:
+#         stroke_id_list = np.array(small_data['stroke_id_list'])
+#         stroke_id = stroke_id_list.min()
 
-    return stroke_id
+#     return stroke_id
 
 
-@callback(
-    Output('data-store-sk', 'data'),
-    ServersideOutput('data-store-fig-all', 'data'),
-    Input('data-store-file', 'data'),
-    prevent_initial_call=True,
-    )
-def cb(df):
-    """Create a scatter with all points.
-    """
-    mms = skprep.MinMaxScaler(feature_range=(10, 80))
-    p_scaled = mms.fit_transform(df['p'].values.reshape(-1,1)).reshape(-1)
+# @callback(
+#     Output('data-store-sk', 'data'),
+#     ServersideOutput('data-store-fig-all', 'data'),
+#     Input('data-store-register', 'data'),
+#     State('data-store-file', 'data'),
+#     prevent_initial_call=True,
+#     )
+# def cb(register, dfs):
+#     """Create a scatter with all points.
+#     """
 
-    fig = px.scatter(data_frame=df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=0.05,)
-    fig.update_traces(marker=dict(color='black', size=p_scaled))
+#     data_sk = {}
+#     data_figall = {}
 
-    mms_json = mms_to_json(mms)
+#     for active in register['active']:
+#         df = dfs[active]
 
-    return mms_json, fig
+#         mms = skprep.MinMaxScaler(feature_range=(10, 80))
+#         p_scaled = mms.fit_transform(df['p'].values.reshape(-1,1)).reshape(-1)
+
+#         fig = px.scatter(data_frame=df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=0.05,)
+#         fig.update_traces(marker=dict(color='black', size=p_scaled))
+
+#         data_figall[active] = fig
+#         data_sk[active] = mms_to_json(mms)
+
+#     return data_sk, data_figall
 
 
 @callback(
     Output('fig-all', 'figure'),
-    Input('data-store-file', 'data'),
-    Input('data-store-fig-all', 'data'),
-    Input('data-store-sk', 'data'),
-    Input('button-stroke-id', 'value'),
+    Input('data-store-register', 'data'),
+    # Input('button-stroke-id', 'value'),
+    State('data-store-file', 'data'),
+    # State('data-store-fig-all', 'data'),
+    # State('data-store-sk', 'data'),
     prevent_initial_call=True,
     )
-def cb(df, fig_a, sk_data, numinput):
+def cb(register, dfs):
     """Update the scatter with all points with a specific stroke.
     """
-    if sk_data is None:
-        return dash.no_update
 
-    mms = mms_from_json(sk_data)
-    stroke_df = select(df, stroke_id=numinput)
+    # if sk_data is None:
+    #     return dash.no_update
 
-    if stroke_df.shape[0] > 0:
-        p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
-        fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=1)
-        fig_b.update_traces(marker=dict(size=p_scaled))
+    # mms = mms_from_json(sk_data)
+    # stroke_df = select(df, stroke_id=numinput)
 
-    fig = go.Figure(data=fig_a.data + fig_b.data)
+    # if stroke_df.shape[0] > 0:
+    #     p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
+    #     fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=1)
+    #     fig_b.update_traces(marker=dict(size=p_scaled))
+
+    data_df = pd.DataFrame()
+    for active in register['active']:
+        df = dfs[active]
+        df['card_id'] = str(active)
+        data_df = pd.concat([data_df, df])
+
+    if data_df.shape[0] > 0:
+        fig = px.scatter(
+            data_frame=data_df, x='x', y='y', color='card_id',
+            custom_data=['card_id', 'stroke_id', 'p'], opacity=0.3, color_discrete_sequence=px.colors.qualitative.T10,
+            )
+        fig = go.Figure(data=fig.data)
+    else:
+        fig = go.Figure()
+
     fig.update_traces(
-        hovertemplate="ID:%{customdata[0]} <br>p:%{customdata[1]:.2f}<extra></extra>"
+        hovertemplate="card:%{customdata[0]} <br>stroke:%{customdata[1]} <br>p:%{customdata[2]:.2f}<extra></extra>"
         )
     fig.layout.update(
-        title='Position (x, y) of all touch points with stroke {} in blue.'.format(numinput),
+        title='Position (x, y) of all touch points for cards {}'.format(register['active']),# with stroke {} in blue.'.format(numinput),
         xaxis_title='x-position',
         yaxis_title='y-position',
         showlegend=False,
@@ -173,105 +200,26 @@ def cb(df, fig_a, sk_data, numinput):
 
 
 @callback(
-    Output('fig-trace', 'figure'),
-    Input('fig-speed', 'relayoutData'),
-    Input('data-store-file', 'data'),
-    Input('data-store-sk', 'data'),
-    Input('button-stroke-id', 'value'),
-    )
-def cb(layout_data, df, sk_data, numinput):
-    """Display a single stroke (x, y) with its segments coloured individually.
-    """
-    if sk_data is None:
-        return dash.no_update
-
-    if layout_data is not None:
-        tmin = layout_data.get('xaxis.range[0]', None)
-        tmax = layout_data.get('xaxis.range[1]', None)
-
-    stroke_i = select(df, stroke_id=numinput).copy()
-
-    if stroke_i.shape[0] > 0:
-        mms = mms_from_json(sk_data)
-        stroke_i['size'] = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
-        stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-
-        if (tmin and tmax):
-            subset = stroke_i[(stroke_i['ts'] > tmin) & (stroke_i['ts'] < tmax)]
-        else:
-            subset = stroke_i
-
-        fig = px.scatter(
-                data_frame=subset, x='x', y='y', color='color', size='size',
-                custom_data=['segment_id'], color_discrete_map='identity',
-                )
-
-    fig = go.Figure(data=fig.data)
-    fig.update_traces(
-        hovertemplate="ID:%{customdata}<extra></extra>"
-        )
-    fig.layout.update(
-        title='Position (x, y) of stroke {}<br>with segments coloured individually.'.format(numinput),
-        xaxis_title='x-position',
-        yaxis_title='y-position',
-        showlegend=False,
-        autosize=False,
-        width=500,
-        height=500,
-    )
-
-    return fig
-
-@callback(
-    Output('fig-speed', 'figure'),
-    Input('data-store-file', 'data'),
-    Input('button-stroke-id', 'value'),
-    )
-def cb(df, numinput):
-    """Display a single stroke (ts, s) with its segments coloured individually.
-    """
-    if df is None:
-        return dash.no_update
-
-    stroke_i = select(df, stroke_id=numinput).copy()
-
-    if stroke_i.shape[0] > 0:
-        stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
-
-        fig = px.scatter(
-                data_frame=stroke_i, x='ts', y='s', color='color',
-                custom_data=['segment_id'], color_discrete_map='identity',
-                )
-
-    fig = go.Figure(data=fig.data)
-    fig.update_traces(
-        hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
-        )
-    fig.update_layout(
-        title='Feature profile of stroke {}<br>with segments coloured individually.'.format(numinput),
-        xaxis_title='timestamp [ms]',
-        yaxis_title='speed',
-        showlegend=False,
-        autosize=False,
-        width=500,
-        height=500,
-        )
-
-    return fig
-
-
-@callback(
     Output('fig-hist-speed', 'figure'),
-    Input('data-store-file', 'data'),
+    Input('data-store-register', 'data'),
+    State('data-store-file', 'data'),
     prevent_initial_call=True,
     )
-def cb(df):
+def cb(register, dfs):
     """Display the histogram of speed in the whole dataset.
     """
-    if df is None:
-        return dash.no_update
 
-    fig = px.histogram(df, x='s')
+    data_df = pd.DataFrame()
+    for active in register['active']:
+        df = dfs[active]
+        df['card_id'] = str(active)
+        data_df = pd.concat([data_df, df])
+
+    if data_df.shape[0] > 0:
+        fig = px.histogram(data_df, color='card_id', x='s', color_discrete_sequence=px.colors.qualitative.T10, histnorm='probability density')
+    else:
+        fig = go.Figure()
+
     fig.layout.update(
         title='Histogram of speed value (used for segmentation).',
         showlegend=False,
@@ -285,13 +233,25 @@ def cb(df):
 
 @callback(
     Output('fig-hist-pressure', 'figure'),
-    Input('data-store-file', 'data'),
+    Input('data-store-register', 'data'),
+    State('data-store-file', 'data'),
     prevent_initial_call=True,
     )
-def cb(df):
+def cb(register, dfs):
     """Display the histogram of pressure in the whole dataset.
     """
-    fig = px.histogram(df, x='p')
+
+    data_df = pd.DataFrame()
+    for active in register['active']:
+        df = dfs[active]
+        df['card_id'] = str(active)
+        data_df = pd.concat([data_df, df])
+
+    if data_df.shape[0] > 0:
+        fig = px.histogram(data_df, color='card_id', x='p', color_discrete_sequence=px.colors.qualitative.T10, histnorm='probability density')
+    else:
+        fig = go.Figure()
+
     fig.layout.update(
         title='Histogram of pressure.',
         showlegend=False,
@@ -301,6 +261,97 @@ def cb(df):
         )
 
     return fig
+
+
+# @callback(
+#     Output('fig-trace', 'figure'),
+#     Input('fig-speed', 'relayoutData'),
+#     Input('data-store-file', 'data'),
+#     Input('data-store-sk', 'data'),
+#     Input('button-stroke-id', 'value'),
+#     prevent_initial_call=True,
+#     )
+# def cb(layout_data, df, sk_data, numinput):
+#     """Display a single stroke (x, y) with its segments coloured individually.
+#     """
+#     if sk_data is None:
+#         return dash.no_update
+
+#     if layout_data is not None:
+#         tmin = layout_data.get('xaxis.range[0]', None)
+#         tmax = layout_data.get('xaxis.range[1]', None)
+
+#     stroke_i = select(df, stroke_id=numinput).copy()
+
+#     if stroke_i.shape[0] > 0:
+#         mms = mms_from_json(sk_data)
+#         stroke_i['size'] = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
+#         stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+
+#         if (tmin and tmax):
+#             subset = stroke_i[(stroke_i['ts'] > tmin) & (stroke_i['ts'] < tmax)]
+#         else:
+#             subset = stroke_i
+
+#         fig = px.scatter(
+#                 data_frame=subset, x='x', y='y', color='color', size='size',
+#                 custom_data=['segment_id'], color_discrete_map='identity',
+#                 )
+
+#     fig = go.Figure(data=fig.data)
+#     fig.update_traces(
+#         hovertemplate="ID:%{customdata}<extra></extra>"
+#         )
+#     fig.layout.update(
+#         title='Position (x, y) of stroke {}<br>with segments coloured individually.'.format(numinput),
+#         xaxis_title='x-position',
+#         yaxis_title='y-position',
+#         showlegend=False,
+#         autosize=False,
+#         width=500,
+#         height=500,
+#     )
+
+#     return fig
+
+# @callback(
+#     Output('fig-speed', 'figure'),
+#     Input('data-store-file', 'data'),
+#     Input('button-stroke-id', 'value'),
+#     prevent_initial_call=True,
+#     )
+# def cb(df, numinput):
+#     """Display a single stroke (ts, s) with its segments coloured individually.
+#     """
+#     if df is None:
+#         return dash.no_update
+
+#     stroke_i = select(df, stroke_id=numinput).copy()
+
+#     if stroke_i.shape[0] > 0:
+#         stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
+
+#         fig = px.scatter(
+#                 data_frame=stroke_i, x='ts', y='s', color='color',
+#                 custom_data=['segment_id'], color_discrete_map='identity',
+#                 )
+
+#     fig = go.Figure(data=fig.data)
+#     fig.update_traces(
+#         hovertemplate="ID:%{customdata} <br>t:%{x} <br>s:%{y:.2f}<extra></extra>"
+#         )
+#     fig.update_layout(
+#         title='Feature profile of stroke {}<br>with segments coloured individually.'.format(numinput),
+#         xaxis_title='timestamp [ms]',
+#         yaxis_title='speed',
+#         showlegend=False,
+#         autosize=False,
+#         width=500,
+#         height=500,
+#         )
+
+#     return fig
+
 
 
 ################################################################################

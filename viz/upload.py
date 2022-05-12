@@ -52,10 +52,12 @@ import json
     Output('upload-summary', 'children'),
 
     Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
+    Input({'type': 'check-button', 'index': ALL}, 'value'),
+    Input({'type': 'check-button', 'index': ALL}, 'id'),
     Input('upload-data', 'contents'),
 
     State('upload-data', 'filename'),
-    State('upload-data', 'last_modified'),
+    # State('upload-data', 'last_modified'),
 
     State('data-store-register', 'data'),
     State('data-store-file', 'data'),
@@ -64,14 +66,26 @@ import json
 
     prevent_initial_call=True,
     )
-def cb(close, list_of_contents, list_of_names, list_of_dates, register, data_file, small_data, cards):
+def cb(
+    close, check_values, check_ids, list_of_contents,
+    list_of_names, register, dfs, small_data, cards
+    ):
 
     if small_data == None: small_data = {}
-    if data_file == None: data_file = {}
-
+    if dfs == None: dfs = {}
 
     ctx = dash.callback_context
+    upload_trigger = 'upload-data' in ctx.triggered[0]['prop_id']
+    check_button_trigger = 'check-button' in ctx.triggered[0]['prop_id']
     close_button_trigger = 'close-button' in ctx.triggered[0]['prop_id']
+
+    # de/activate dataset
+    if check_button_trigger:
+        register['active'] = []
+        for check_value, check_id in zip(check_values, check_ids):
+            if check_value: register['active'] += [check_id['index']]
+
+        return dfs, None, register, cards
 
     # remove dataset
     if close_button_trigger:
@@ -79,46 +93,38 @@ def cb(close, list_of_contents, list_of_names, list_of_dates, register, data_fil
         button_id = json.loads(button_id)
         index_to_remove = button_id['index']
 
-        # remove data from cards and data_file
-        children = [child for child in cards
-            if child['props']['id']['index'] != index_to_remove]
-        del data_file[index_to_remove]
+        # remove data from cards and dfs
+        cards = [card for card in cards if card['props']['id']['index'] != index_to_remove]
+        del dfs[index_to_remove]
+        register['active'] = [i for i in register['active'] if i != index_to_remove]
 
-        print(close_button_trigger, cards, small_data, data_file)
+        return dfs, None, register, cards
 
-        return data_file, None, register, children
+    # add dataset
+    if upload_trigger:
 
-    # file dropped
-    if (not close_button_trigger) and (list_of_contents is not None):
+        for content, filename in zip(list_of_contents, list_of_names):
+            data_df, small_data = parse_contents(content, filename)
 
-        contents = []
-        for c, n, d in zip(list_of_contents, list_of_names, list_of_dates):
-            contents.append(parse_contents(c, n, d))
-
-        updated_cards = cards
-        for i, content in enumerate(contents):
-
-            data_df, small_data = content
-            filename = list_of_names[i]
             register, card_id = r_add_new_file(register)
             card = make_card(filename, data_df, card_id)
-            updated_cards += [card]
-            data_file[card_id] = data_df
+            cards += [card]
 
-        return data_file, None, register, updated_cards
+            dfs[card_id] = data_df
+
+        return dfs, None, register, cards
 
 
 def r_add_new_file(register):
-    card_id = register.setdefault('new_id', 0)
+    card_id = register['new_id']
     register['new_id'] += 1
+    register['active'] += [card_id]
     return register, card_id
-
-
 
 
 ################################################################################
 # UTILS
-def parse_contents(contents, filename, date):
+def parse_contents(contents, filename):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:

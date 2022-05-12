@@ -24,10 +24,16 @@ external_stylesheets = [dbc.themes.BOOTSTRAP, FONT_AWESOME]
 app = DashProxy(__name__, external_stylesheets=external_stylesheets,
                           transforms=[ServersideOutputTransform(), NoOutputTransform()])
 
+register = {
+    'new_id' : 0,
+    'active' : [],
+}
+
+
 app.layout = html.Div(
     # DATASTORES
     [
-    dcc.Store(id='data-store-register', data={}),
+    dcc.Store(id='data-store-register', data=register),
     dcc.Store(id='data-store-file'),
     dcc.Store(id='data-store-fig-all'),
     dcc.Store(id='data-store-sk'),
