@@ -47,8 +47,9 @@ app.layout = html.Div(
     # TABS
     [
     dcc.Tabs(id='tabs', value='tab-1',
-             children=[dcc.Tab(label='Processing', value='tab-1', children=processing.layout),
-                       dcc.Tab(label='Analysis', value='tab-2', children=analysis.layout),
+             children=[dcc.Tab(label='All data', value='tab-1', children=processing.layout),
+                       # dcc.Tab(label='Single strokes', value='tab-2', children=processing.layout),
+                       dcc.Tab(label='Embedding', value='tab-2', children=analysis.layout),
                 ]
         )
     ]

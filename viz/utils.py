@@ -9,6 +9,15 @@ import sklearn.preprocessing as skprep
 ################################################################################
 # data file processing
 
+def select_active_dfs(dfs, register):
+    data_df = pd.DataFrame()
+    for active in register['active']:
+        df = dfs[active]
+        df['card_id'] = str(active)
+        data_df = pd.concat([data_df, df])
+    return data_df
+
+
 def format_from_json(json, source='/data'):
     df = pd.read_json(json, orient='split')
     df.columns = [0, 'source', 'data']

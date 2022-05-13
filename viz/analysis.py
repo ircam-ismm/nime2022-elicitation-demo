@@ -18,7 +18,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import plotly.express as px
 
-from utils import format_from_json, format_from_df, select
+from utils import format_from_json, format_from_df, select, select_active_dfs
 import embedding
 
 
@@ -55,26 +55,30 @@ layout = [
 ################################################################################
 # CALLBACKS
 @callback(
-    ServersideOutput('data-store-embedding', 'data', session_check=True, arg_check=False),
+    ServersideOutput('data-store-embedding', 'data'),
     Input('button_id', 'n_clicks'),
+    State('data-store-register', 'data'),
     State('data-store-file', 'data'),
     prevent_initial_call=True,
-    memoize=True,
 )
-def cb(n_clicks, df):
+def cb(n_clicks, register, dfs):
     """Compute a DTW-TSNE embedding from individual segments.
     """
-    segments = [grp[['s', 'da']].values for i, grp in df.groupby('segment_id')]
+    data_df = select_active_dfs(dfs, register)
 
+
+    grp_by_card_segment = data_df.groupby(['card_id', 'segment_id'])
+
+    segments = [grp[['s', 'da']].values for i, grp in grp_by_card_segment]
     logging.info('cluster start')
     sm = embedding.compute_similarity_matrix(segments)
     logging.info('cluster done')
-
     logging.info('embed start')
     emb = embedding.tsne_embed(sm, perplexity=30)
     logging.info('embed done')
-
     emb = pd.DataFrame(emb, columns=['x', 'y'])
+
+    emb[['card_id', 'segment_id']] = pd.DataFrame(list(grp_by_card_segment.groups.keys()))
 
     return emb
 
@@ -82,24 +86,27 @@ def cb(n_clicks, df):
 @callback(
     Output('fig-embedding', 'figure'),
     Input('data-store-embedding', 'data'),
-    Input('data-store-file', 'data'),
+    State('data-store-register', 'data'),
+    State('data-store-file', 'data'),
     prevent_initial_call=True,
     )
-def cb(emb, df):
+def cb(emb, register, dfs):
     """Display the DTW-TSNE embedding.
     """
     if emb is None:
         return dash.no_update
 
     # compute color
-    color=df.groupby('segment_id')['t0_norm'].mean()
+    # color=df.groupby('segment_id')['t0_norm'].mean()
 
     # similar to list(set(df['segment_id']))
-    emb['segment_id'] = list(df.groupby(['segment_id']).groups.keys())
+    # emb['segment_id'] = list(df.groupby(['segment_id']).groups.keys())
+
+    print('embedding', set(emb['card_id']))
 
     fig = px.scatter(data_frame=emb, x='x', y='y',
-                     color_continuous_scale='rdpu', color=color,
-                     custom_data=['segment_id'])
+                     color_discrete_sequence=px.colors.qualitative.T10, color='card_id',
+                     custom_data=['card_id', 'segment_id'])
 
     fig = go.Figure(data=fig.data)
     fig.update_traces(
@@ -120,24 +127,43 @@ def cb(emb, df):
     Output('fig-selected', 'figure'),
     Input('fig-selected-dropdown', 'value'),
     Input('fig-embedding', 'selectedData'),
+    State('data-store-register', 'data'),
     State('data-store-file', 'data'),
     State('data-store-embedding', 'data'),
     prevent_initial_call=True,
     )
-def cb(xy, selected, df, emb):
+def cb(xy, selected, register, dfs, emb):
     """Display the selection of segments.
     """
     if selected is None:
         return dash.no_update
 
-    selected_ids = [p['customdata'][0] for p in selected['points']]
-    selected_data = select(df, segment_id=selected_ids).copy()
+    data_df = select_active_dfs(dfs, register)
+
+    print(data_df.shape, selected)
+
+    selection = np.array([p['customdata'] for p in selected['points']]).astype(int)
+
+    print('selection', selection)
+
+    res = pd.DataFrame()
+    for row in selection:
+        selected = select(data_df, card_id=str(row[0]), segment_id=row[1])
+        print(row, selected.shape[0])
+        res = pd.concat([res, selected])
+
+    print('embedding 1', res.shape)
+
+    res['plot_key'] = res.apply(lambda x: str(x['card_id'])+'_'+str(x['segment_id']), axis=1)
+    selected_data = res
+
+    print('selected_data', selected_data)
 
     selected_data['ts_'] = 0
     def add_ts_(grp):
         grp['ts_'] = np.arange(grp.shape[0])
         return grp
-    selected_data = selected_data.groupby('segment_id').apply(add_ts_)
+    selected_data = selected_data.groupby('plot_key').apply(add_ts_)
 
     if xy == 'features':
         x = 'ts_'
@@ -150,7 +176,7 @@ def cb(xy, selected, df, emb):
 
     fig = px.line(
         data_frame=selected_data, x=x, y=y, labels=labels,
-        facet_col='segment_id', facet_col_wrap=4)
+        facet_col='plot_key', facet_col_wrap=4)
     fig.update_layout(
         title='Selection of segments displayed by {}'.format(xy),
         showlegend=False,
@@ -158,6 +184,7 @@ def cb(xy, selected, df, emb):
         width=1000,
         height=1000,
         )
+    # fig = go.Figure()
 
     return fig
 

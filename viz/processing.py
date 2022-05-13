@@ -20,7 +20,7 @@ import plotly.graph_objs as go
 import plotly.express as px
 import plotly.io
 
-from utils import format_from_json, format_from_df, tab10, select
+from utils import format_from_json, format_from_df, tab10, select, select_active_dfs
 
 
 ################################################################################
@@ -29,15 +29,15 @@ layout = [
     # FIGURES
     html.Div(id='processing-layout', children=[
 
-        html.Div([
-            html.Div([daq.NumericInput(id='button-card-id', label='card:', value=0, min=0, max=1e3),],
-                     className='col-1'),
-            html.Div([daq.NumericInput(id='button-stroke-id', label='stroke:', value=0, min=0, max=1e3),],
-                     className='col-1'),
-            html.Div([daq.NumericInput(id='button-segment-id', label='segment:',value=-1, min=0, max=1e3),],
-                     className='col-1'),
-            ],
-        className='row'),
+        # html.Div([
+        #     html.Div([daq.NumericInput(id='button-card-id', label='card:', value=0, min=0, max=1e3),],
+        #              className='col-1'),
+        #     html.Div([daq.NumericInput(id='button-stroke-id', label='stroke:', value=0, min=0, max=1e3),],
+        #              className='col-1'),
+        #     html.Div([daq.NumericInput(id='button-segment-id', label='segment:',value=-1, min=0, max=1e3),],
+        #              className='col-1'),
+        #     ],
+        # className='row'),
 
         html.Div([
             dbc.Col([
@@ -170,11 +170,13 @@ def cb(register, dfs):
     #     fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=1)
     #     fig_b.update_traces(marker=dict(size=p_scaled))
 
-    data_df = pd.DataFrame()
-    for active in register['active']:
-        df = dfs[active]
-        df['card_id'] = str(active)
-        data_df = pd.concat([data_df, df])
+    data_df = select_active_dfs(dfs, register)
+
+    # data_df = pd.DataFrame()
+    # for active in register['active']:
+    #     df = dfs[active]
+    #     df['card_id'] = str(active)
+    #     data_df = pd.concat([data_df, df])
 
     if data_df.shape[0] > 0:
         fig = px.scatter(
@@ -209,11 +211,12 @@ def cb(register, dfs):
     """Display the histogram of speed in the whole dataset.
     """
 
-    data_df = pd.DataFrame()
-    for active in register['active']:
-        df = dfs[active]
-        df['card_id'] = str(active)
-        data_df = pd.concat([data_df, df])
+    data_df = select_active_dfs(dfs, register)
+    # data_df = pd.DataFrame()
+    # for active in register['active']:
+    #     df = dfs[active]
+    #     df['card_id'] = str(active)
+    #     data_df = pd.concat([data_df, df])
 
     if data_df.shape[0] > 0:
         fig = px.histogram(data_df, color='card_id', x='s', color_discrete_sequence=px.colors.qualitative.T10, histnorm='probability density')
@@ -241,11 +244,13 @@ def cb(register, dfs):
     """Display the histogram of pressure in the whole dataset.
     """
 
-    data_df = pd.DataFrame()
-    for active in register['active']:
-        df = dfs[active]
-        df['card_id'] = str(active)
-        data_df = pd.concat([data_df, df])
+    data_df = select_active_dfs(dfs, register)
+
+    # data_df = pd.DataFrame()
+    # for active in register['active']:
+    #     df = dfs[active]
+    #     df['card_id'] = str(active)
+    #     data_df = pd.concat([data_df, df])
 
     if data_df.shape[0] > 0:
         fig = px.histogram(data_df, color='card_id', x='p', color_discrete_sequence=px.colors.qualitative.T10, histnorm='probability density')
