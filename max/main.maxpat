@@ -3,14 +3,14 @@
 		"fileversion" : 1,
 		"appversion" : 		{
 			"major" : 8,
-			"minor" : 2,
-			"revision" : 2,
+			"minor" : 3,
+			"revision" : 1,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 34.0, 87.0, 1318.0, 999.0 ],
+		"rect" : [ 34.0, 79.0, 1318.0, 967.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -49,14 +49,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 941.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -123,14 +123,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 941.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -628,14 +628,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 941.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -702,14 +702,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 941.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -893,14 +893,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 34.0, 113.0, 1318.0, 973.0 ],
+						"rect" : [ 34.0, 105.0, 1318.0, 941.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -931,6 +931,55 @@
 						"assistshowspatchername" : 0,
 						"boxes" : [ 							{
 								"box" : 								{
+									"id" : "obj-49",
+									"maxclass" : "comment",
+									"numinlets" : 1,
+									"numoutlets" : 0,
+									"patching_rect" : [ 41.0, 579.349651336669922, 111.0, 20.0 ],
+									"text" : "THEN...."
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-24",
+									"linecount" : 3,
+									"maxclass" : "comment",
+									"numinlets" : 1,
+									"numoutlets" : 0,
+									"patching_rect" : [ 32.356460500000139, 354.5, 293.0, 47.0 ],
+									"presentation_linecount" : 3,
+									"text" : "DO THIS  only the first time you use this patch:\nclick on all of these in turn, each time waiting until the node.script debug tool below turns green."
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-23",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 37.5, 553.349651336669922, 204.0, 22.0 ],
+									"presentation_linecount" : 2,
+									"text" : "script npm install compute-histogram"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-14",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 26.5, 705.349651336669922, 259.0, 22.0 ],
+									"text" : "script npm install ml-savitzky-golay-generalized"
+								}
+
+							}
+, 							{
+								"box" : 								{
 									"id" : "obj-8",
 									"maxclass" : "message",
 									"numinlets" : 2,
@@ -948,7 +997,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 759.349651336669922, 143.0, 22.0 ],
+									"patching_rect" : [ 37.5, 526.349651336669922, 143.0, 22.0 ],
 									"text" : "script npm install poolifier"
 								}
 
@@ -971,7 +1020,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 735.349651336669922, 157.0, 22.0 ],
+									"patching_rect" : [ 37.5, 502.349651336669922, 157.0, 22.0 ],
 									"text" : "script npm install everpolate"
 								}
 
@@ -1190,7 +1239,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 711.349651336669922, 219.0, 22.0 ],
+									"patching_rect" : [ 37.5, 478.349651336669922, 219.0, 22.0 ],
 									"text" : "script npm install dynamic-time-warping"
 								}
 
@@ -1202,8 +1251,8 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 687.349651336669922, 259.0, 22.0 ],
-									"text" : "script npm install ml-savitzky-golay-generalized"
+									"patching_rect" : [ 37.5, 454.349651336669922, 193.0, 22.0 ],
+									"text" : "script npm install ml-savitzky-golay"
 								}
 
 							}
@@ -1250,7 +1299,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 663.349651336669922, 113.0, 22.0 ],
+									"patching_rect" : [ 37.5, 430.349651336669922, 113.0, 22.0 ],
 									"text" : "script npm install fili"
 								}
 
@@ -1262,7 +1311,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 639.349651336669922, 133.0, 22.0 ],
+									"patching_rect" : [ 37.5, 406.349651336669922, 133.0, 22.0 ],
 									"text" : "script npm install numjs"
 								}
 
@@ -1274,7 +1323,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
-									"patching_rect" : [ 53.0, 615.349651336669922, 66.0, 22.0 ],
+									"patching_rect" : [ 41.0, 660.349651336669922, 66.0, 22.0 ],
 									"text" : "script start"
 								}
 
@@ -1286,7 +1335,7 @@
 									"numinlets" : 3,
 									"numoutlets" : 3,
 									"outlettype" : [ "", "", "" ],
-									"patching_rect" : [ 147.0, 793.349651336669922, 131.0, 22.0 ],
+									"patching_rect" : [ 142.356460500000139, 754.349651336669922, 131.0, 22.0 ],
 									"text" : "routepass running start"
 								}
 
@@ -1307,7 +1356,7 @@
 									"numoutlets" : 1,
 									"offset" : [ 0.0, 0.0 ],
 									"outlettype" : [ "bang" ],
-									"patching_rect" : [ 147.0, 817.349651336669922, 400.0, 220.0 ],
+									"patching_rect" : [ 142.356460500000139, 788.349651336669922, 400.0, 220.0 ],
 									"viewvisibility" : 1
 								}
 
@@ -1324,6 +1373,8 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
+										"node_bin_path" : "",
+										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -1450,6 +1501,49 @@
 								}
 
 							}
+, 							{
+								"box" : 								{
+									"angle" : 270.0,
+									"bordercolor" : [ 0.313725490196078, 0.266666666666667, 0.611764705882353, 1.0 ],
+									"grad1" : [ 1.0, 0.968627450980392, 0.968627450980392, 1.0 ],
+									"grad2" : [ 0.537254901960784, 0.537254901960784, 0.537254901960784, 1.0 ],
+									"id" : "obj-41",
+									"maxclass" : "panel",
+									"mode" : 1,
+									"numinlets" : 1,
+									"numoutlets" : 0,
+									"patching_rect" : [ 17.5, 350.349651336669922, 320.0, 253.650348663330078 ],
+									"proportion" : 0.5
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-42",
+									"maxclass" : "comment",
+									"numinlets" : 1,
+									"numoutlets" : 0,
+									"patching_rect" : [ 37.5, 638.349651336669922, 111.0, 20.0 ],
+									"text" : "start the script!"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"angle" : 270.0,
+									"bordercolor" : [ 0.313725490196078, 0.266666666666667, 0.611764705882353, 1.0 ],
+									"grad1" : [ 1.0, 0.968627450980392, 0.968627450980392, 1.0 ],
+									"grad2" : [ 0.2, 0.2, 0.2, 1.0 ],
+									"id" : "obj-43",
+									"maxclass" : "panel",
+									"mode" : 1,
+									"numinlets" : 1,
+									"numoutlets" : 0,
+									"patching_rect" : [ 17.5, 629.349651336669922, 320.0, 63.0 ],
+									"proportion" : 0.5
+								}
+
+							}
  ],
 						"lines" : [ 							{
 								"patchline" : 								{
@@ -1513,6 +1607,13 @@
 								"patchline" : 								{
 									"destination" : [ "obj-39", 0 ],
 									"source" : [ "obj-22", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-39", 0 ],
+									"source" : [ "obj-23", 0 ]
 								}
 
 							}
@@ -1742,13 +1843,13 @@
 								"name" : "AudioStatus_Menu",
 								"default" : 								{
 									"bgfillcolor" : 									{
-										"type" : "color",
+										"angle" : 270.0,
+										"autogradient" : 0,
 										"color" : [ 0.294118, 0.313726, 0.337255, 1 ],
 										"color1" : [ 0.454902, 0.462745, 0.482353, 0.0 ],
 										"color2" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-										"angle" : 270.0,
 										"proportion" : 0.39,
-										"autogradient" : 0
+										"type" : "color"
 									}
 
 								}
@@ -1760,12 +1861,12 @@
 								"name" : "Audiomix",
 								"default" : 								{
 									"bgfillcolor" : 									{
-										"type" : "gradient",
+										"angle" : 270.0,
+										"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
 										"color1" : [ 0.376471, 0.384314, 0.4, 1.0 ],
 										"color2" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-										"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-										"angle" : 270.0,
-										"proportion" : 0.39
+										"proportion" : 0.39,
+										"type" : "gradient"
 									}
 
 								}
@@ -1881,14 +1982,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1318.0, 973.0 ],
+						"rect" : [ 0.0, 26.0, 1318.0, 941.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -2171,7 +2272,7 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
-										"npm_bin_path" : "",
+										"node_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -2617,13 +2718,13 @@
 								"name" : "AudioStatus_Menu",
 								"default" : 								{
 									"bgfillcolor" : 									{
-										"type" : "color",
+										"angle" : 270.0,
+										"autogradient" : 0,
 										"color" : [ 0.294118, 0.313726, 0.337255, 1 ],
 										"color1" : [ 0.454902, 0.462745, 0.482353, 0.0 ],
 										"color2" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-										"angle" : 270.0,
 										"proportion" : 0.39,
-										"autogradient" : 0
+										"type" : "color"
 									}
 
 								}
@@ -2635,12 +2736,12 @@
 								"name" : "Audiomix",
 								"default" : 								{
 									"bgfillcolor" : 									{
-										"type" : "gradient",
+										"angle" : 270.0,
+										"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
 										"color1" : [ 0.376471, 0.384314, 0.4, 1.0 ],
 										"color2" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-										"color" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
-										"angle" : 270.0,
-										"proportion" : 0.39
+										"proportion" : 0.39,
+										"type" : "gradient"
 									}
 
 								}
@@ -2763,7 +2864,7 @@
 			}
 , 			{
 				"name" : "filter.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/max",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
 				"implicit" : 1
@@ -2776,7 +2877,7 @@
 			}
 , 			{
 				"name" : "format_sg.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/max",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
 				"implicit" : 1
@@ -2807,14 +2908,14 @@
 			}
 , 			{
 				"name" : "sensel_ui.maxpat",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/max",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "unistroke.js",
-				"bootpath" : "~/Documents/research/rto_max/max_implementation/new/max",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/max",
 				"patcherrelativepath" : ".",
 				"type" : "TEXT",
 				"implicit" : 1
