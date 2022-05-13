@@ -6,6 +6,27 @@ tab10 = sns.color_palette('tab10')
 
 import sklearn.preprocessing as skprep
 
+
+################################################################################
+# Serialisation
+def mms_to_json(model):
+    serialize = json.dumps
+
+    data = {}
+    data['init_params'] = model.get_params()
+    data['model_params'] = mp = {}
+    for p in ('min_', 'scale_','data_min_', 'data_max_', 'data_range_'):
+        mp[p] = getattr(model, p).tolist()
+    return serialize(data)
+
+def mms_from_json(jstring):
+    data = json.loads(jstring)
+    model = skprep.MinMaxScaler(**data['init_params'])
+    for name, p in data['model_params'].items():
+        setattr(model, name, np.array(p))
+    return model
+
+
 ################################################################################
 # data file processing
 

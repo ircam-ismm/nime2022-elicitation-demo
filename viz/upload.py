@@ -46,8 +46,8 @@ import json
 # https://www.dash-extensions.com/transforms/serverside-output-transform
 @callback(
 
-    ServersideOutput('data-store-file', 'data', arg_check=False),
-    Output('data-store-small', 'data'),
+    ServersideOutput('data-store-dfs', 'data', arg_check=False),
+    Output('data-store-props', 'data'),
     Output('data-store-register', 'data'),
     Output('upload-summary', 'children'),
 
@@ -60,18 +60,18 @@ import json
     # State('upload-data', 'last_modified'),
 
     State('data-store-register', 'data'),
-    State('data-store-file', 'data'),
-    State('data-store-small', 'data'),
+    State('data-store-dfs', 'data'),
+    State('data-store-props', 'data'),
     State('upload-summary', 'children'),
 
     prevent_initial_call=True,
     )
 def cb(
     close, check_values, check_ids, list_of_contents,
-    list_of_names, register, dfs, small_data, cards
+    list_of_names, register, dfs, props, cards
     ):
 
-    if small_data == None: small_data = {}
+    if props == None: props = {}
     if dfs == None: dfs = {}
 
     ctx = dash.callback_context
@@ -104,7 +104,7 @@ def cb(
     if upload_trigger:
 
         for content, filename in zip(list_of_contents, list_of_names):
-            data_df, small_data = parse_contents(content, filename)
+            data_df, props = parse_contents(content, filename)
 
             register, card_id = r_add_new_file(register)
             card = make_card(filename, data_df, card_id)
@@ -137,33 +137,9 @@ def parse_contents(contents, filename):
         return html.Div([error_msg])
 
     data_df = format_from_df(df, source='/data')
-    small_data = parse_small_data(data_df)
+    props = parse_data_properties(data_df)
 
-    return data_df, small_data
-
-
-def parse_small_data(data_df):
-    # parse small data
-    small_data = {}
-    stroke_id_list = list(set(data_df['stroke_id']))
-    small_data['stroke_id_list'] = stroke_id_list
-    small_data['num_strokes'] = len(stroke_id_list)
-    segment_id_list = list(set(data_df['segment_id']))
-    small_data['segment_id_list'] = segment_id_list
-    small_data['num_segments'] = len(segment_id_list)
-
-    # create map between stroke and segment ids, vice et versa
-    tmp = data_df.groupby('stroke_id').apply(lambda x: list(set(x['segment_id'])))
-    stroke_segment_map = {}
-    segment_stroke_map = {}
-    for i, row in tmp.iteritems():
-        stroke_segment_map[i] = row
-        for segment in row:
-            segment_stroke_map[segment] = i
-    small_data['stroke_segment_map'] = stroke_segment_map
-    small_data['segment_stroke_map'] = segment_stroke_map
-
-    return small_data
+    return data_df, props
 
 
 def make_card(filename, data_df, card_id):
@@ -194,11 +170,7 @@ def make_card(filename, data_df, card_id):
                 style={'display': 'inline-block', 'float': 'right'})
             ]),
         dbc.CardBody([
-            # html.P("content", className="card-text"),
             dbc.Table([
-                # Header
-                html.Thead(html.Tr([html.Th(col) for col in ('key', 'value')])),
-                # Body
                 html.Tbody([html.Tr([html.Td(i) for i in row]) for row in table_data])
                 ]),
             ]),
@@ -210,91 +182,26 @@ def make_card(filename, data_df, card_id):
     return card
 
 
+def parse_data_properties(data_df):
+    props = {}
+    stroke_id_list = list(set(data_df['stroke_id']))
+    props['stroke_id_list'] = stroke_id_list
+    props['num_strokes'] = len(stroke_id_list)
+    segment_id_list = list(set(data_df['segment_id']))
+    props['segment_id_list'] = segment_id_list
+    props['num_segments'] = len(segment_id_list)
+
+    # create map between stroke and segment ids, vice et versa
+    tmp = data_df.groupby('stroke_id').apply(lambda x: list(set(x['segment_id'])))
+    stroke_segment_map = {}
+    segment_stroke_map = {}
+    for i, row in tmp.iteritems():
+        stroke_segment_map[i] = row
+        for segment in row:
+            segment_stroke_map[segment] = i
+    props['stroke_segment_map'] = stroke_segment_map
+    props['segment_stroke_map'] = segment_stroke_map
+
+    return props
 
 
-
-
-# @callback(
-#     # Output('upload-summary', 'children'),
-
-#     Input('data-store-file', 'data'),
-#     Input('data-store-register', 'data'),
-
-#     Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
-#     State({'type': 'close-button', 'index': ALL}, 'id'),
-
-#     State('upload-summary', 'children'),
-#     )
-# def cb(data_df, register, a, b, cards):
-
-#     ctx = dash.callback_context
-
-#     print("make cards", register, ctx.triggered)
-
-#     # on page load
-#     if data_df is None:
-#         return dash.no_update
-#         # summary = html.Div([html.H5('No data, upload a file using the box above.')])
-#         # return [summary]
-
-#     # add a new file
-#     prop_ids = [i['prop_id'] for i in ctx.triggered]
-#     if any([(i in prop_ids) for i in ['data-store-file.data', 'data-store-register.data']]):
-
-#         filename = register['current']
-#         obj = [i for i in register['data'] if i['filename'] == filename][0]
-#         n_files = len(register['data'])
-
-#         card = make_card(obj['filename'], data_df, n_files)
-#         new_cards = cards+[card]
-#         return new_cards
-
-#     else:
-#         button_id, _ = ctx.triggered[0]["prop_id"].split(".")
-#         print('ctx', ctx, button_id)
-
-#         return []
-
-#     # if any([(i in prop_ids) for i in ['data-store-file.data', 'data-store-register.data']]):
-#     # remove a file
-
-
-
-
-
-
-# @callback(
-#     Input('data-store-register', 'data')
-#     )
-# def func(data):
-#     print('data-store-register', data)
-
-
-# @callback(
-#     Output('upload-summary', 'children'),
-#     Input({'type': 'close-button', 'index': ALL}, 'n_clicks'),
-#     State({'type': 'close-button', 'index': ALL}, 'id'),
-#     State('upload-summary', 'children'),
-#     )
-# def cb(a, b, children):
-#     print(a, b)
-
-#     ctx = dash.callback_context
-
-#     if not ctx.triggered:
-#         return dash.no_update
-
-#     else:
-#         button_id, _ = ctx.triggered[0]["prop_id"].split(".")
-
-#         print('ctx', ctx, button_id)
-
-#         button_id = json.loads(button_id)
-#         index_to_remove = button_id["index"]
-#         children = [
-#             child
-#             for child in children
-#             if child["props"]["id"]["index"] != index_to_remove
-#         ]
-
-#         return children

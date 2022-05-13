@@ -25,57 +25,39 @@ import embedding
 ################################################################################
 # LAYOUT
 layout = [
-    html.Div(id='analysis-layout', children=[
-
-
-        html.Div([
-                dcc.Graph(id='fig-embedding',),
-            ],
-            style={'width': '49%', 'display': 'inline-block'},
-        ),
-        html.Div([
-                dcc.Dropdown(['features', 'position'], 'features', id='fig-selected-dropdown'),
-                dcc.Graph(id='fig-selected',),
-            ],
-            style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
-        ),
-
-        html.Div([
-            dbc.Button(id='button_id', children='Embed!'),
+    html.Div([
+        dbc.Button(id='button-embed', children='Embed!'),
+        dcc.Graph(id='fig-embedding',),
         ],
-        style={'width': '100%', 'display': 'inline-block'}
-        ),
-
+        style={'width': '49%', 'display': 'inline-block'},
+    ),
+    html.Div([
+            dcc.Dropdown(['features', 'position'], 'features', id='fig-selected-dropdown'),
+            dcc.Graph(id='fig-selected',),
         ],
-        style= {'display': 'block'}
-        )
-    ]
+        style={'width': '49%', 'display': 'inline-block', 'vertical-align': 'top'},
+    ),
+]
 
 
 ################################################################################
 # CALLBACKS
 @callback(
     ServersideOutput('data-store-embedding', 'data'),
-    Input('button_id', 'n_clicks'),
+    Input('button-embed', 'n_clicks'),
     State('data-store-register', 'data'),
-    State('data-store-file', 'data'),
+    State('data-store-dfs', 'data'),
     prevent_initial_call=True,
 )
 def cb(n_clicks, register, dfs):
     """Compute a DTW-TSNE embedding from individual segments.
     """
     data_df = select_active_dfs(dfs, register)
-
-
     grp_by_card_segment = data_df.groupby(['card_id', 'segment_id'])
 
     segments = [grp[['s', 'da']].values for i, grp in grp_by_card_segment]
-    logging.info('cluster start')
     sm = embedding.compute_similarity_matrix(segments)
-    logging.info('cluster done')
-    logging.info('embed start')
     emb = embedding.tsne_embed(sm, perplexity=30)
-    logging.info('embed done')
     emb = pd.DataFrame(emb, columns=['x', 'y'])
 
     emb[['card_id', 'segment_id']] = pd.DataFrame(list(grp_by_card_segment.groups.keys()))
@@ -87,7 +69,7 @@ def cb(n_clicks, register, dfs):
     Output('fig-embedding', 'figure'),
     Input('data-store-embedding', 'data'),
     State('data-store-register', 'data'),
-    State('data-store-file', 'data'),
+    State('data-store-dfs', 'data'),
     prevent_initial_call=True,
     )
 def cb(emb, register, dfs):
@@ -96,13 +78,9 @@ def cb(emb, register, dfs):
     if emb is None:
         return dash.no_update
 
-    # compute color
+    # TODO: add different color schemes, by cards or invention time as follows.
     # color=df.groupby('segment_id')['t0_norm'].mean()
-
-    # similar to list(set(df['segment_id']))
     # emb['segment_id'] = list(df.groupby(['segment_id']).groups.keys())
-
-    print('embedding', set(emb['card_id']))
 
     fig = px.scatter(data_frame=emb, x='x', y='y',
                      color_discrete_sequence=px.colors.qualitative.T10, color='card_id',
@@ -128,7 +106,7 @@ def cb(emb, register, dfs):
     Input('fig-selected-dropdown', 'value'),
     Input('fig-embedding', 'selectedData'),
     State('data-store-register', 'data'),
-    State('data-store-file', 'data'),
+    State('data-store-dfs', 'data'),
     State('data-store-embedding', 'data'),
     prevent_initial_call=True,
     )
@@ -139,25 +117,14 @@ def cb(xy, selected, register, dfs, emb):
         return dash.no_update
 
     data_df = select_active_dfs(dfs, register)
-
-    print(data_df.shape, selected)
-
     selection = np.array([p['customdata'] for p in selected['points']]).astype(int)
-
-    print('selection', selection)
 
     res = pd.DataFrame()
     for row in selection:
         selected = select(data_df, card_id=str(row[0]), segment_id=row[1])
-        print(row, selected.shape[0])
         res = pd.concat([res, selected])
-
-    print('embedding 1', res.shape)
-
     res['plot_key'] = res.apply(lambda x: str(x['card_id'])+'_'+str(x['segment_id']), axis=1)
     selected_data = res
-
-    print('selected_data', selected_data)
 
     selected_data['ts_'] = 0
     def add_ts_(grp):
@@ -184,7 +151,6 @@ def cb(xy, selected, register, dfs, emb):
         width=1000,
         height=1000,
         )
-    # fig = go.Figure()
 
     return fig
 
