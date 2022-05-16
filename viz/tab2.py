@@ -1,4 +1,8 @@
+import numpy as np
+
+from dash_extensions.enrich import Output, Input, State
 from dash_extensions.enrich import html, dcc
+from dash_extensions.enrich import callback
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 
@@ -34,17 +38,45 @@ layout = [
 
 ################################################################################
 # CALLBACKS
+
+@callback(
+    Output('button-card-id', 'value'),
+    Input('data-store-register', 'data'),
+    State('data-store-props', 'data'),
+    prevent_initial_call=True,
+)
+def cb(register, props):
+    active = register.get('active', None)
+    active = active[0] if active else active
+
+    return active
+
+
 # @callback(
+#     Output('button-card-id', 'value'),
+#     Output('button-card-id', 'min'),
+#     Output('button-card-id', 'max'),
 #     Output('button-stroke-id', 'min'),
 #     Output('button-stroke-id', 'max'),
-#     Input('data-store-props', 'data'),
+#     Output('button-segment-id', 'min'),
+#     Output('button-segment-id', 'max'),
+#     Input('data-store-register', 'data'),
+#     State('data-store-props', 'data'),
 #     prevent_initial_call=True
 #     )
-# def cb(small_data):
+# def cb(register, props):
 #     """Set the range for stroke selection based on stroke ids in the data.
 #     """
-#     stroke_id_list = np.array(small_data['stroke_id_list'])
-#     return stroke_id_list.min(), stroke_id_list.max()
+#     print("update buttons", register, props)
+#     for active in register['active']:
+#         card_props = props[str(active)]
+
+#         stroke_id_list = np.array(card_props['stroke_id_list'])
+#         segment_id_list = np.array(card_props['segment_id_list'])
+
+    # stroke_id_list = np.array(small_data['stroke_id_list'])
+
+    # return stroke_id_list.min(), stroke_id_list.max()
 
 # @callback(
 #     Output('button-segment-id', 'min'),

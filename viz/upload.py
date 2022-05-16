@@ -85,7 +85,7 @@ def cb(
         for check_value, check_id in zip(check_values, check_ids):
             if check_value: register['active'] += [check_id['index']]
 
-        return dfs, None, register, cards
+        return dfs, props, register, cards
 
     # remove dataset
     if close_button_trigger:
@@ -96,23 +96,25 @@ def cb(
         # remove data from cards and dfs
         cards = [card for card in cards if card['props']['id']['index'] != index_to_remove]
         del dfs[index_to_remove]
+        del props[index_to_remove]
         register['active'] = [i for i in register['active'] if i != index_to_remove]
 
-        return dfs, None, register, cards
+        return dfs, props, register, cards
 
     # add dataset
     if upload_trigger:
 
         for content, filename in zip(list_of_contents, list_of_names):
-            data_df, props = parse_contents(content, filename)
+            data_df, card_props = parse_contents(content, filename)
 
             register, card_id = r_add_new_file(register)
             card = make_card(filename, data_df, card_id)
             cards += [card]
 
             dfs[card_id] = data_df
+            props[card_id] = card_props
 
-        return dfs, None, register, cards
+        return dfs, props, register, cards
 
 
 def r_add_new_file(register):
