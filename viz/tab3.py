@@ -55,7 +55,7 @@ def cb(n_clicks, register, dfs):
     data_df = select_active_dfs(dfs, register)
     grp_by_card_segment = data_df.groupby(['card_id', 'segment_id'])
 
-    segments = [grp[['s', 'da']].values for i, grp in grp_by_card_segment]
+    segments = [grp[['s', 'angle', 'p']].values for i, grp in grp_by_card_segment]
     sm = embedding.compute_similarity_matrix(segments)
     emb = embedding.tsne_embed(sm, perplexity=30)
     emb = pd.DataFrame(emb, columns=['x', 'y'])
@@ -134,8 +134,8 @@ def cb(xy, selected, register, dfs, emb):
 
     if xy == 'features':
         x = 'ts_'
-        y = ['s', 'da']
-        labels = {'ts_': 'zeroed timestamp [ms]', 'value': 's, da'}
+        y = ['s', 'angle', 'p']
+        labels = {'ts_': 'zeroed timestamp [ms]', 'value': 's, angle, p'}
     if xy == 'position':
         x = 'x'
         y = 'y'

@@ -71,26 +71,29 @@ def format_data(df):
             x, y, p = row.get('xyp', default_value)
             x_, y_, p_ = row.get('rel_xyp', default_value)
             x0, y0, p0 = row.get('rel_xyp_lp', default_value)
-            x1, y1, p1 = row.get('xyp_sg', default_value)
+            # x1, y1, p1 = row.get('xyp_sg', default_value)
             s = row['s']
+            x1, y1 = row['dx_dy']
             angle = row['angle']
-            da = row['da']
-            da = da[0] if isinstance(da, (list,)) else da
+            # da = row['da']
+            # da = da[0] if isinstance(da, (list,)) else da
 
-            new_row = [key, t0, t0_norm, ts, stroke_id, segment_id, 
-                       x, y, p, x_, y_, p_, x0, y0, p0, x1, y1, p1,
-                       s, angle, da]
+            new_row = [key, t0, t0_norm, ts, 
+                       stroke_id, segment_id, 
+                       x, y, p, x_, y_, p_, 
+                       x0, y0, p0, x1, y1,
+                       s, angle]
 
             new_rows.append(new_row)
-        except KeyError:
+        except KeyError as error:
             print("KeyError", i, row)
 
     data = pd.DataFrame(data=new_rows,
                         columns=['key', 't0', 't0_norm', 'ts',
                                  'stroke_id', 'segment_id',
                                  'x', 'y', 'p', 'x_', 'y_', 'p_',
-                                 'x0', 'y0', 'p0', 'x1', 'y1', 'p1',
-                                 's', 'angle', 'da']
+                                 'x0', 'y0', 'p0', 'x1', 'y1',
+                                 's', 'angle']
                        )
     mms = skprep.MinMaxScaler()
     data['t0_norm'] = mms.fit_transform(data['t0'].values.reshape(-1, 1)).reshape(-1)

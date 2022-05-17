@@ -18,7 +18,6 @@ import dash_bootstrap_components as dbc
 
 import plotly.graph_objs as go
 import plotly.express as px
-import plotly.io
 
 from utils import format_from_json, format_from_df, tab10, select, select_active_dfs
 
