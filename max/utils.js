@@ -125,11 +125,11 @@ class Unwrap {
 
 ////////////////////////////////////////////////////////////////////////////////
 // DEBUG PRINT
-function db_obj() {
-    this.PRINT_CNT = 0;
-    this.PRINT_FRQ = 100;
+class Debug {
+    PRINT_CNT = 0;
+    PRINT_FRQ = 100;
 
-    this.debug_print = function(message, data) {
+    print(message, data) {
         if ((this.PRINT_CNT % this.PRINT_FRQ) == 0) {
             Max.post(message, data);
         }
@@ -142,6 +142,6 @@ module.exports = {
     Lowpass,
     Unwrap,
     TimeInterpolation,
-    debug_print: db_obj,
+    Debug,
 }
 
