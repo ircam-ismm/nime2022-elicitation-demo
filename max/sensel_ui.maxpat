@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 1289.0, 861.0, 430.0, 372.0 ],
+		"rect" : [ 734.0, 500.0, 1136.0, 798.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -115,9 +115,9 @@
 					"numinlets" : 1,
 					"numoutlets" : 4,
 					"outlettype" : [ "list", "list", "int", "" ],
-					"patching_rect" : [ 4.0, 19.5, 193.0, 110.0 ],
+					"patching_rect" : [ 4.0, 19.5, 205.0, 104.0 ],
 					"presentation" : 1,
-					"presentation_rect" : [ 4.0, 19.5, 193.0, 110.0 ]
+					"presentation_rect" : [ 4.0, 19.5, 588.0, 336.0 ]
 				}
 
 			}
@@ -361,6 +361,7 @@
 										"style" : "",
 										"subpatcher_template" : "",
 										"assistshowspatchername" : 0,
+										"visible" : 1,
 										"boxes" : [ 											{
 												"box" : 												{
 													"id" : "obj-9",
@@ -376,12 +377,13 @@
 , 											{
 												"box" : 												{
 													"id" : "obj-10",
+													"linecount" : 2,
 													"maxclass" : "message",
 													"numinlets" : 2,
 													"numoutlets" : 1,
 													"outlettype" : [ "" ],
-													"patching_rect" : [ 161.0, 197.0, 200.0, 22.0 ],
-													"text" : "1 2 0.326189 0.518188 0. 255 0 10"
+													"patching_rect" : [ 161.0, 197.0, 200.0, 35.0 ],
+													"text" : "1 1 0.955249 0.324219 0.01767 255 0 10"
 												}
 
 											}
@@ -468,13 +470,12 @@
 , 											{
 												"box" : 												{
 													"id" : "obj-17",
-													"linecount" : 2,
 													"maxclass" : "newobj",
 													"numinlets" : 1,
 													"numoutlets" : 4,
 													"outlettype" : [ "", "", "", "" ],
-													"patching_rect" : [ 27.666666666666629, 235.0, 371.0, 35.0 ],
-													"text" : "jstrigger \"(['paintoval', x - r, y - r, x + r, y + r, a[5], a[6], a[7] ])\" \"(x = a[2] * 193)\" \"(y = (1 - a[3]) * 110)\" \"(r = a[4] * 10 + 1)\""
+													"patching_rect" : [ 27.666666666666629, 235.0, 671.0, 22.0 ],
+													"text" : "jstrigger \"(['paintoval', x - r, y - r, x + r, y + r, a[5], a[6], a[7] ])\" \"(x = a[2] * 193 * 3)\" \"(y = (1 - a[3]) * 110 * 3)\" \"(r = a[4] * 10 + 1)\""
 												}
 
 											}
@@ -951,7 +952,7 @@
 													"numoutlets" : 1,
 													"outlettype" : [ "" ],
 													"patching_rect" : [ 185.0, 440.399993999999992, 220.0, 22.0 ],
-													"text" : "1 2 0.326189 0.481812 0."
+													"text" : "1 1 0.955249 0.675781 0.01767"
 												}
 
 											}

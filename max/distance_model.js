@@ -88,7 +88,6 @@ dtwCompute = new DtwCompute();
 function processDtw(inputData) {
     if (cluster.isPrimary) {
         for (const id in cluster.workers) {
-            // Max.post("send");
             cluster.workers[id].send(inputData);
         }
     }

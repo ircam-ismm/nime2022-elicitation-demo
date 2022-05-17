@@ -123,7 +123,7 @@ Max.addHandler('new_sample', async (...sample) => {
             // lowpass
             var rel_xyp_lp = lowpass.lowpass(rel_xyp);
             stroke.push(rel_xyp_lp);
-            stroke_pressure.push(rel_xyp_lp[2]);
+            stroke_pressure.push(10*rel_xyp_lp[2]);
 
             // derivate x,y
             var x = rel_xyp_lp[0];
@@ -168,19 +168,19 @@ Max.addHandler('new_sample', async (...sample) => {
             }
 
             if (LOGGING_DATA) {
-                to_log[sample_key] = {'sample_key': sample_key,
-                                      'timestamp0': timestamp,
-                                      'timestamp': timestamp_interp,
-                                      'stroke_id': stroke_id,
-                                      // 'touching': touching,
-                                      'xyp': xyp_interp,
-                                      'rel_xyp': rel_xyp,
-                                      'rel_xyp_lp': rel_xyp_lp,
-                                      'dx_dy': [dx, dy],
-                                      's': speed,
-                                      'angle': angle,
-                                      'segment_id': segment_id,
-                                      }
+                to_log = {
+                    'sample_key': sample_key,
+                    'timestamp0': timestamp,
+                    'timestamp': timestamp_interp,
+                    'stroke_id': stroke_id,
+                    'xyp': xyp_interp,
+                    'rel_xyp': rel_xyp,
+                    'rel_xyp_lp': rel_xyp_lp,
+                    'dx_dy': [dx, dy],
+                    's': speed,
+                    'angle': angle,
+                    'segment_id': segment_id,
+                    }
                 var res = await Max.outlet('logging_data', JSON.stringify(to_log));
                 to_log = {};
             }
