@@ -52,53 +52,66 @@ def format_from_df(df,  source='/data'):
         data_df = format_feat(select_df)
     return data_df
 
+
 def format_data(df):
     new_rows = []
-    default_value = np.ones(3) * np.nan
-
     for i, row in df.iterrows():
+        row = eval(row['data'])
+        new_rows.append(row)
+    data = pd.DataFrame(data=new_rows)
 
-        row = eval(row['data'].replace('false', 'False'))
-
-        try:
-            key = row['sample_key']
-            t0 = row['timestamp0']
-            t0_norm = 0
-            ts = row['timestamp']
-            stroke_id = row['stroke_id']
-            segment_id = row['segment_id']
-
-            x, y, p = row.get('xyp', default_value)
-            x_, y_, p_ = row.get('rel_xyp', default_value)
-            x0, y0, p0 = row.get('rel_xyp_lp', default_value)
-            # x1, y1, p1 = row.get('xyp_sg', default_value)
-            s = row['s']
-            x1, y1 = row['dx_dy']
-            angle = row['angle']
-            # da = row['da']
-            # da = da[0] if isinstance(da, (list,)) else da
-
-            new_row = [key, t0, t0_norm, ts, 
-                       stroke_id, segment_id, 
-                       x, y, p, x_, y_, p_, 
-                       x0, y0, p0, x1, y1,
-                       s, angle]
-
-            new_rows.append(new_row)
-        except KeyError as error:
-            print("KeyError", i, row)
-
-    data = pd.DataFrame(data=new_rows,
-                        columns=['key', 't0', 't0_norm', 'ts',
-                                 'stroke_id', 'segment_id',
-                                 'x', 'y', 'p', 'x_', 'y_', 'p_',
-                                 'x0', 'y0', 'p0', 'x1', 'y1',
-                                 's', 'angle']
-                       )
     mms = skprep.MinMaxScaler()
-    data['t0_norm'] = mms.fit_transform(data['t0'].values.reshape(-1, 1)).reshape(-1)
+    data['timestamp0_norm'] = mms.fit_transform(data['timestamp0'].values.reshape(-1, 1)).reshape(-1)
     
     return data
+
+# def format_data(df):
+#     new_rows = []
+#     default_value = np.ones(3) * np.nan
+
+#     for i, row in df.iterrows():
+
+#         row = eval(row['data'].replace('false', 'False'))
+
+#         try:
+#             key = row['sample_key']
+#             t0 = row['timestamp0']
+#             t0_norm = 0
+#             ts = row['timestamp']
+#             stroke_id = row['stroke_id']
+#             segment_id = row['segment_id']
+
+#             x, y, p = row.get('xyp', default_value)
+#             x_, y_, p_ = row.get('rel_xyp', default_value)
+#             x0, y0, p0 = row.get('rel_xyp_lp', default_value)
+#             # x1, y1, p1 = row.get('xyp_sg', default_value)
+#             s = row['s']
+#             x1, y1 = row['dx_dy']
+#             angle = row['angle']
+#             # da = row['da']
+#             # da = da[0] if isinstance(da, (list,)) else da
+
+#             new_row = [key, t0, t0_norm, ts, 
+#                        stroke_id, segment_id, 
+#                        x, y, p, x_, y_, p_, 
+#                        x0, y0, p0, x1, y1,
+#                        s, angle]
+
+#             new_rows.append(new_row)
+#         except KeyError as error:
+#             print("KeyError", i, row)
+
+#     data = pd.DataFrame(data=new_rows,
+#                         columns=['key', 't0', 't0_norm', 'ts',
+#                                  'stroke_id', 'segment_id',
+#                                  'x', 'y', 'p', 'x_', 'y_', 'p_',
+#                                  'x0', 'y0', 'p0', 'x1', 'y1',
+#                                  's', 'angle']
+#                        )
+#     mms = skprep.MinMaxScaler()
+#     data['t0_norm'] = mms.fit_transform(data['t0'].values.reshape(-1, 1)).reshape(-1)
+    
+#     return data
 
 # def format_feat(df):
 #     # feat = feat['1'].str.replace('null', '0')??

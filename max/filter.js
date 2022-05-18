@@ -19,11 +19,22 @@ var to_log = {};
 
 ////////////////////////////////////////////////////////////////////////////////
 // DTW callback
+// https://math.stackexchange.com/questions/106700/incremental-averaging
+var avg_dtw = 0;
+var n_dtw = 1;
+
 dtw_worker.addListener(async function(res) {
-    Max.post('cb', res);
+
+    var min_dtw = res['min_dtw'];
+    avg_dtw = avg_dtw + (min_dtw - avg_dtw) / n_dtw;
+    n_dtw += 1;
+    res['avg_dtw'] = avg_dtw;
+
     var out = await Max.outlet('logging_dtw', JSON.stringify(res));
-    var out = await Max.outlet('dtw', res['min_dtw_pond']);
+    var out = await Max.outlet('dtw', min_dtw/avg_dtw);
+    Max.post('cb', min_dtw, avg_dtw);
 });
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,8 +125,7 @@ Max.addHandler('new_sample', async (...sample) => {
             var timestamp_interp = sample_interp[index][0];
             var sample_key = timestamp.toString() + '_' + timestamp_interp.toString();
 
-            Max.post('IN: ', sample_key);
-
+            // Max.post('IN: ', sample_key);
 
             var xyp_interp = sample_interp[index].slice(-3);
             // substract current position from first stroke point touchdown
@@ -144,9 +154,16 @@ Max.addHandler('new_sample', async (...sample) => {
             var speed = 100*Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
             stroke_speed.push(speed);
             // compute angle and unwrap
-            var angle = Math.atan2(xyp[1], xyp[0]);
+            var angle = Math.atan2(dy, dx);
             var angle = unwrap.unwrap(angle);
             stroke_angle.push(angle);
+
+            // derivate - two sample late
+            var dangle = 0;
+            if (stroke.length > SG_WINDOW_SIZE) {
+                dangle = SG(stroke_angle.slice(-5), 1, sg_options).slice(-3,-2)[0];
+            }
+            stroke_dangle.push(dangle);
 
 
             // find extrema over the last three recorded points
@@ -173,18 +190,31 @@ Max.addHandler('new_sample', async (...sample) => {
                     'timestamp0': timestamp,
                     'timestamp': timestamp_interp,
                     'stroke_id': stroke_id,
-                    'xyp': xyp_interp,
-                    'rel_xyp': rel_xyp,
-                    'rel_xyp_lp': rel_xyp_lp,
-                    'dx_dy': [dx, dy],
+                    'segment_id': segment_id,
+                    // 'xyp': xyp_interp,
+                    'x': xyp_interp[0],
+                    'y': xyp_interp[1],
+                    'p': xyp_interp[2],
+                    // 'rel_xyp': rel_xyp,
+                    'x_': rel_xyp[0],
+                    'y_': rel_xyp[1],
+                    'p_': rel_xyp[2],
+                    // 'rel_xyp_lp': rel_xyp_lp,
+                    'x0': rel_xyp_lp[0],
+                    'y0': rel_xyp_lp[1],
+                    'p0': rel_xyp_lp[2],
+                    // 'dx_dy': [dx, dy],
+                    'x1': dx,
+                    'y1': dy,
+                    // features
                     's': speed,
                     'angle': angle,
-                    'segment_id': segment_id,
+                    'dangle': dangle,
                     }
                 var res = await Max.outlet('logging_data', JSON.stringify(to_log));
                 to_log = {};
             }
-            Max.post('OUT: ', sample_key);
+            // Max.post('OUT: ', sample_key);
         }
     } // if (finger == 1)
 });
@@ -194,10 +224,10 @@ var segment_id = 0;
 function new_segment(cur_segment_len) {
 
     var speed = stroke_speed.slice(-cur_segment_len);
-    var angle = stroke_angle.slice(-cur_segment_len);
+    var dangle = stroke_dangle.slice(-cur_segment_len);
     var pressure = stroke_pressure.slice(-cur_segment_len);
 
-    var features = speed.map(function(num, idx) {return [num, angle[idx], pressure[idx]]})
+    var features = speed.map(function(num, idx) {return [num, dangle[idx], pressure[idx]]})
 
     if (features.length > 10) {
         var startTime = performance.now();

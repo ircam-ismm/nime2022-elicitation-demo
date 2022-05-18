@@ -28,8 +28,8 @@ class DtwCompute {
         //   The minimum DTW distance.
 
         var min_key = 0;
-        var min_dist = 1000;
-        var min_dist_pond = 1000;
+        var min_dist = 0;
+        var min_dist_pond = 0;
 
         var n_models = Object.keys(this.models).length;
         // if no models yet, store series and return
@@ -50,6 +50,10 @@ class DtwCompute {
 
                 var cur_dist_pond = 2*cur_dist / (A.length + C.length);
 
+                if (min_dist == 0) {
+                    min_dist = cur_dist;
+                    min_dist_pond = cur_dist_pond;
+                }
                 if (cur_dist < min_dist) {
                     min_key = key;
                     min_dist = cur_dist;
