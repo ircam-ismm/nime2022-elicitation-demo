@@ -1,5 +1,7 @@
 import numpy as np
 
+import sklearn.preprocessing as skprep
+
 from dash_extensions.enrich import Output, Input, State
 from dash_extensions.enrich import html, dcc
 from dash_extensions.enrich import callback
@@ -102,18 +104,20 @@ def cb(card_id, stroke_id, register, dfs):
 
     if data_df.shape[0] > 0:
         fig_a = px.scatter(
-            data_frame=data_df, x='x', y='y', color='card_id',
+            data_frame=data_df, x='x', y='y',# color='card_id',
             custom_data=['card_id', 'stroke_id', 'p'], opacity=0.3,
-            color_discrete_sequence=px.colors.qualitative.T10,
+            #color_discrete_sequence=px.colors.qualitative.T10,
             )
+        fig_a.update_traces(marker=dict(color='black'))
         fig_a = go.Figure(data=fig_a.data)
     else:
         fig_a = go.Figure()
 
     if stroke_df.shape[0] > 0:
-    #     p_scaled = mms.transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
-        fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['stroke_id', 'p'], opacity=1)
-        # fig_b.update_traces(marker=dict(size=p_scaled))
+        fig_b = px.scatter(data_frame=stroke_df, x='x', y='y', custom_data=['card_id', 'stroke_id', 'p'], opacity=0.7)
+        mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        p_scaled = mms.fit_transform(stroke_df['p'].values.reshape(-1,1)).reshape(-1)
+        fig_b.update_traces(marker=dict(size=p_scaled))
     else:
         fig_b = go.Figure()
 
@@ -161,17 +165,17 @@ def cb(card_id, stroke_id, dfs, layout_data):
 
     fig = go.Figure()
     if stroke_i.shape[0] > 0:
-        # mms = mms_from_json(sk_data)
-        # stroke_i['size'] = mms.transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
+        mms = skprep.MinMaxScaler(feature_range=(10, 80))
+        stroke_i['size'] = mms.fit_transform(stroke_i['p'].values.reshape(-1,1)).reshape(-1)
         stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
 
         if (tmin and tmax):
-            subset = stroke_i[(stroke_i['ts'] > tmin) & (stroke_i['ts'] < tmax)]
+            subset = stroke_i[(stroke_i['timestamp'] > tmin) & (stroke_i['timestamp'] < tmax)]
         else:
             subset = stroke_i
 
         fig = px.scatter(
-                data_frame=subset, x='x', y='y', color='color',# size='size',
+                data_frame=subset, x='x', y='y', color='color', size='size',
                 custom_data=['segment_id'], color_discrete_map='identity',
                 )
 
@@ -212,7 +216,7 @@ def cb(card_id, stroke_id, dfs):
         stroke_i['color'] = ['rgba'+str(tab10[int(i)%10]+(1,)) for i in stroke_i['segment_id']]
 
         fig = px.scatter(
-                data_frame=stroke_i, x='ts', y='s', color='color',
+                data_frame=stroke_i, x='timestamp', y='s', color='color',
                 custom_data=['segment_id'], color_discrete_map='identity',
                 )
 

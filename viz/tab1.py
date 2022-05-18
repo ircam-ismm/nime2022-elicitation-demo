@@ -68,8 +68,8 @@ def cb(register, dfs):
         mms = skprep.MinMaxScaler(feature_range=(10, 80))
         p_scaled = mms.fit_transform(data_df['p'].values.reshape(-1,1)).reshape(-1)
         fig.update_traces(marker=dict(size=p_scaled))
-
         fig = go.Figure(data=fig.data)
+
     else:
         fig = go.Figure()
 

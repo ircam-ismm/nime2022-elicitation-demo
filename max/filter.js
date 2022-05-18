@@ -25,14 +25,14 @@ var n_dtw = 1;
 
 dtw_worker.addListener(async function(res) {
 
-    var min_dtw = res['min_dtw'];
+    var min_dtw = res['min_dtw_pond'];
     avg_dtw = avg_dtw + (min_dtw - avg_dtw) / n_dtw;
     n_dtw += 1;
     res['avg_dtw'] = avg_dtw;
 
     var out = await Max.outlet('logging_dtw', JSON.stringify(res));
     var out = await Max.outlet('dtw', min_dtw/avg_dtw);
-    Max.post('cb', min_dtw, avg_dtw);
+    Max.post('cb', min_dtw.toFixed(2), avg_dtw.toFixed(2));
 });
 
 
