@@ -1,6 +1,6 @@
 import base64
-import datetime
 import io
+import json
 
 from dash_extensions.enrich import Output, Input, State, ALL, MATCH
 from dash_extensions.enrich import html, dcc
@@ -40,7 +40,6 @@ layout = [
     html.Hr(),
     ]
 
-import json
 ################################################################################
 # CALLBACK
 # https://www.dash-extensions.com/transforms/serverside-output-transform
@@ -96,7 +95,7 @@ def cb(
         # remove data from cards and dfs
         cards = [card for card in cards if card['props']['id']['index'] != index_to_remove]
         del dfs[index_to_remove]
-        del props[index_to_remove]
+        del props[str(index_to_remove)]
         register['active'] = [i for i in register['active'] if i != index_to_remove]
 
         return dfs, props, register, cards

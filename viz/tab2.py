@@ -7,11 +7,13 @@ from dash_extensions.enrich import html, dcc
 from dash_extensions.enrich import callback
 import dash_bootstrap_components as dbc
 import dash_daq as daq
+import dash
 
 import plotly.graph_objs as go
 import plotly.express as px
 
 from utils import select, tab10
+
 
 ################################################################################
 # LAYOUT
@@ -69,6 +71,8 @@ def cb(register, props):
 def cb(card_id, segment_id, props):
     """Set the stroke id from a segment id selection or on page load.
     """
+    if card_id == []: return dash.no_update
+
     prop = props[str(card_id)]
 
     if segment_id != -1:
@@ -92,13 +96,10 @@ def cb(card_id, segment_id, props):
 def cb(card_id, stroke_id, register, dfs):
     """Update the scatter with all points with a specific stroke.
     """
-    # data_df = select_active_dfs(dfs, register)
+    if card_id == []: return go.Figure()
+
     data_df = dfs[card_id]
     data_df['card_id'] = str(card_id)
-
-    # if sk_data is None:
-    #     return dash.no_update
-    # mms = mms_from_json(sk_data)
 
     stroke_df = select(data_df, stroke_id=stroke_id)
 
@@ -137,8 +138,6 @@ def cb(card_id, stroke_id, register, dfs):
     return fig
 
 
-
-
 @callback(
     Output('fig-stroke', 'figure'),
     Input('button-card-id', 'value'),
@@ -150,8 +149,8 @@ def cb(card_id, stroke_id, register, dfs):
 def cb(card_id, stroke_id, dfs, layout_data):
     """Display a single stroke (x, y) with its segments coloured individually.
     """
-    # if sk_data is None:
-    #     return dash.no_update
+    if card_id == []: return go.Figure()
+
     data_df = dfs[card_id]
     data_df['card_id'] = str(card_id)
 
@@ -206,6 +205,8 @@ def cb(card_id, stroke_id, dfs, layout_data):
 def cb(card_id, stroke_id, dfs):
     """Display a single stroke (ts, s) with its segments coloured individually.
     """
+    if card_id == []: return go.Figure()
+
     data_df = dfs[card_id]
     data_df['card_id'] = str(card_id)
 
