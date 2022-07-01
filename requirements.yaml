@@ -1,0 +1,29 @@
+# run: conda env create --file requirements.yaml
+name: rto_nime22
+dependencies:
+
+- python=3.7
+- pip
+- click
+- pandas
+- matplotlib
+- seaborn
+- ipywidgets
+- scikit-learn
+- scikit-learn-intelex
+- tqdm
+
+- conda-forge::opentsne
+- conda-forge::tslearn
+
+- duartexyz::detecta
+
+- pip:
+  - python-osc
+  - diskcache
+  - dash
+  - dash_extensions
+  # - "dash[diskcache]"
+  - dash-daq
+  - dash-bootstrap-components
+

@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "compute-histogram": "^0.9.11",
+    "dynamic-time-warping": "^1.0.0",
+    "everpolate": "^0.0.3",
+    "fili": "^2.0.3",
+    "ml-savitzky-golay": "^5.0.0",
+    "numjs": "^0.16.1",
+    "poolifier": "^2.2.0"
+  }
+}
