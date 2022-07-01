@@ -10,11 +10,11 @@ The repository is organised as following:
 - data: store experimental data
 - viz: live analysis and exploration of experimental data
 
-
 ### Max patch:
 
 1. start the Max patch elicitation-nime22-project.maxproj
 2. first time only: install all npm dependencies in tab `process` by clicking on all `npm install ...`
+3. download the audio models from [link](https://nubo.ircam.fr/index.php/s/rC5rt5qG8GqswEb/download), courtesy of [ACIDS-Ircam](http://acids.ircam.fr) and Antoine Caillon, and place engine.ts under `other` in the max project.
 
 
 ### Visualization of Recorded Data
