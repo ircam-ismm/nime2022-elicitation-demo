@@ -129,14 +129,15 @@ def parse_contents(contents, filename):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
-        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        df.columns = [0, 'source', 'data']
+        df = pd.read_json(io.StringIO(decoded.decode('utf-8')), lines=True)
+        # df.columns = [0, 'source', 'data']
     except Exception as e:
         print(e)
         error_msg = """There was an error processing this file. Use pandas dataframes
         saved to disk as csv."""
         return html.Div([error_msg])
 
+    print('parse_contents ', df)
     data_df = format_from_df(df, source='/data')
     props = parse_data_properties(data_df)
 
