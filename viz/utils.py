@@ -45,11 +45,20 @@ def format_from_json(json, source='/data'):
     return format_from_df(df, source=source)
 
 def format_from_df(df,  source='/data'):
-    select_df = select(df, source=source)
-    if source == '/data':
-        data_df = format_data(select_df)
-    elif source == '/feat':
-        data_df = format_feat(select_df)
+    # select_df = select(df, source=source)
+    # if source == '/data':
+    #     data_df = format_data(select_df)
+    # elif source == '/feat':
+    #     data_df = format_feat(select_df)
+    data_mask = ~df['timestamp'].isna()
+    # model_mask = data_mask
+    columns = [
+    'sample_key', 'timestamp0', 'timestamp', 'stroke_id', 'segment_id', 'x',
+    'y', 'p', 'x_', 'y_', 'p_', 'x0', 'y0', 'p0', 'x1', 'y1', 's', 'angle',
+    'dangle', 'input', 'audio']
+
+    data_df = df[data_mask][columns]
+
     return data_df
 
 

@@ -38,8 +38,8 @@ dtw_worker.addListener(async function(res) {
         logger.log(res);
     }
 
-    var out = await Max.outlet('dtw', min_dtw/avg_dtw);
-    Max.post('cb', min_dtw.toFixed(2), avg_dtw.toFixed(2));
+    var out = await Max.outlet('dtw', min_dtw);
+    Max.post('cb', (min_dtw/avg_dtw).toFixed(2), min_dtw.toFixed(2), avg_dtw.toFixed(2));
 });
 
 
@@ -68,7 +68,7 @@ var last_segment_end = 0;
 var current_input = [ -1, 'unknown' ];
 var current_feedback = [ -1, -1, -1, -1, -1 ]; // dsp on, novelty on, synth on, novelty dB, synth dB
 
-var SPEED_THRESHOLD = 0.5;
+var SPEED_THRESHOLD = 1.0;
 var SG_WINDOW_SIZE = 5;
 
 var sg_options = {
@@ -201,7 +201,7 @@ Max.addHandler('new_sample', async (...sample) => {
                 // local minimum
                 if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
 
-                    if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 20)) || (cur_segment_len > 120)) {
+                    if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (cur_segment_len > 120)) {
                         Max.post('SEGMENT:', segment_id, stroke.length);
                         new_segment(cur_segment_len);
                         last_segment_end = cur_segment_len;
