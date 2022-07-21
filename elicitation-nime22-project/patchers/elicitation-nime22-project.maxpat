@@ -3,8 +3,8 @@
 		"fileversion" : 1,
 		"appversion" : 		{
 			"major" : 8,
-			"minor" : 2,
-			"revision" : 2,
+			"minor" : 3,
+			"revision" : 1,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
@@ -156,14 +156,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 856.0, 139.0, 1141.0, 1052.0 ],
+						"rect" : [ 0.0, 26.0, 1141.0, 1078.0 ],
 						"bglocked" : 0,
 						"openinpresentation" : 1,
 						"default_fontsize" : 12.0,
@@ -291,7 +291,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 180.744034000000056, 719.293501675128937, 125.0, 22.0 ],
-									"text" : "1 1 0 0. 0."
+									"text" : "0 1 1 0. 0."
 								}
 
 							}
@@ -611,8 +611,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -646,7 +646,6 @@
 										"style" : "",
 										"subpatcher_template" : "",
 										"assistshowspatchername" : 0,
-										"visible" : 1,
 										"boxes" : [ 											{
 												"box" : 												{
 													"id" : "obj-34",
@@ -2349,14 +2348,14 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 1141.0, 1052.0 ],
+						"rect" : [ 0.0, 26.0, 1141.0, 1078.0 ],
 						"bglocked" : 1,
 						"openinpresentation" : 0,
 						"default_fontsize" : 12.0,
@@ -2861,8 +2860,6 @@
 									"saved_object_attributes" : 									{
 										"autostart" : 1,
 										"defer" : 0,
-										"node_bin_path" : "",
-										"npm_bin_path" : "",
 										"watch" : 0
 									}
 ,
@@ -3433,8 +3430,8 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 8,
-							"minor" : 2,
-							"revision" : 2,
+							"minor" : 3,
+							"revision" : 1,
 							"architecture" : "x64",
 							"modernui" : 1
 						}
@@ -3590,8 +3587,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -4225,7 +4222,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"patching_rect" : [ 629.5, 642.0, 134.0, 52.0 ],
-									"text" : "00:00",
+									"text" : "03:00",
 									"textcolor" : [ 0.5, 1.0, 0.03, 0.5 ]
 								}
 
@@ -4625,8 +4622,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -4863,8 +4860,8 @@
 														"fileversion" : 1,
 														"appversion" : 														{
 															"major" : 8,
-															"minor" : 2,
-															"revision" : 2,
+															"minor" : 3,
+															"revision" : 1,
 															"architecture" : "x64",
 															"modernui" : 1
 														}
@@ -5959,12 +5956,10 @@
 , 							{
 								"box" : 								{
 									"id" : "obj-84",
-									"linecount" : 3,
 									"maxclass" : "comment",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 28.0, 209.623779000000013, 444.0, 60.0 ],
-									"text" : "15015: 1 1 0.8937602796052632 0.47796630859375 0.17823863636363638\n15016: 1 1 0.9026521381578947 0.44586181640625 0.10943181818181819\n15017: 1 2 0.9026521381578947 0.44586181640625 0\n"
+									"patching_rect" : [ 28.0, 209.623779000000013, 444.0, 20.0 ]
 								}
 
 							}
@@ -6084,8 +6079,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -6617,8 +6612,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -7340,8 +7335,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -7386,8 +7381,8 @@
 														"fileversion" : 1,
 														"appversion" : 														{
 															"major" : 8,
-															"minor" : 2,
-															"revision" : 2,
+															"minor" : 3,
+															"revision" : 1,
 															"architecture" : "x64",
 															"modernui" : 1
 														}
@@ -8421,8 +8416,8 @@
 										"fileversion" : 1,
 										"appversion" : 										{
 											"major" : 8,
-											"minor" : 2,
-											"revision" : 2,
+											"minor" : 3,
+											"revision" : 1,
 											"architecture" : "x64",
 											"modernui" : 1
 										}
@@ -8707,8 +8702,8 @@
 														"fileversion" : 1,
 														"appversion" : 														{
 															"major" : 8,
-															"minor" : 2,
-															"revision" : 2,
+															"minor" : 3,
+															"revision" : 1,
 															"architecture" : "x64",
 															"modernui" : 1
 														}
@@ -9555,6 +9550,7 @@
 													"numinlets" : 1,
 													"numoutlets" : 1,
 													"outlettype" : [ "" ],
+													"parameter_enable" : 0,
 													"patching_rect" : [ 19.0, 78.0, 150.0, 22.0 ]
 												}
 
@@ -9567,6 +9563,7 @@
 													"numinlets" : 1,
 													"numoutlets" : 1,
 													"outlettype" : [ "" ],
+													"parameter_enable" : 0,
 													"patching_rect" : [ 194.0, 78.0, 150.0, 22.0 ]
 												}
 
@@ -10958,28 +10955,28 @@
 			}
 , 			{
 				"name" : "filter.js",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/code",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/code",
 				"patcherrelativepath" : "../code",
 				"type" : "TEXT",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "fit_jweb_to_bounds.js",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/code",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/code",
 				"patcherrelativepath" : "../code",
 				"type" : "TEXT",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "list-fifo.js",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/code",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/code",
 				"patcherrelativepath" : "../code",
 				"type" : "TEXT",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "n4m.monitor.maxpat",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/patchers",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/patchers",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
 				"implicit" : 1
@@ -10994,7 +10991,7 @@
 			}
 , 			{
 				"name" : "resize_n4m_monitor_patcher.js",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/code",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/code",
 				"patcherrelativepath" : "../code",
 				"type" : "TEXT",
 				"implicit" : 1
@@ -11005,21 +11002,21 @@
 			}
 , 			{
 				"name" : "simpleFM~.maxpat",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/patchers",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/patchers",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "thru.maxpat",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/patchers",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/patchers",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
 				"implicit" : 1
 			}
 , 			{
 				"name" : "touch-input.maxpat",
-				"bootpath" : "~/Documents/research/movement_exploration/nime2022-elicitation-demo/elicitation-nime22-project/patchers",
+				"bootpath" : "~/Documents/projects/element/research/rto_nime22/elicitation-nime22-project/patchers",
 				"patcherrelativepath" : ".",
 				"type" : "JSON",
 				"implicit" : 1

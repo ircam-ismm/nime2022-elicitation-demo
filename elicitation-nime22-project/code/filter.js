@@ -30,6 +30,7 @@ dtw_worker.addListener(async function(res) {
     n_dtw += 1;
     res['avg_dtw'] = avg_dtw;
     res['dtw']     = min_dtw / avg_dtw;
+    res['logtype'] = 'segment';
 
     if (LOGGING_DATA == 1) {
         var out = await Max.outlet('logging_dtw', JSON.stringify(res));
@@ -92,7 +93,7 @@ Max.addHandler('current_feedback', async (...values) => {
 	
 // log events: timetag, symbols...
 Max.addHandler('log_event', async (...values) => {
-    res = { 'timestamp': parseInt(values[0]), 'event': values.slice(1) };
+    res = { 'logtype': 'event', 'timestamp0': parseInt(values[0]), 'event': values.slice(1) };
 
     if (LOGGING_DATA == 1) {
         var out = await Max.outlet('logging_event', JSON.stringify(res));
@@ -212,6 +213,7 @@ Max.addHandler('new_sample', async (...sample) => {
 
             if (LOGGING_DATA > 0) {
                 to_log = {
+		    'logtype': 'data',		    
                     'sample_key': sample_key,
                     'timestamp0': timestamp,
                     'timestamp': timestamp_interp,
