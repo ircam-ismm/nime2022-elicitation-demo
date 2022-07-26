@@ -90,7 +90,7 @@ Max.addHandler('current_feedback', async (...values) => {
     current_feedback = [ ...values ];
 });
 
-	
+
 // log events: timetag, symbols...
 Max.addHandler('log_event', async (...values) => {
     res = { 'logtype': 'event', 'timestamp0': parseInt(values[0]), 'event': values.slice(1) };
@@ -213,7 +213,7 @@ Max.addHandler('new_sample', async (...sample) => {
 
             if (LOGGING_DATA > 0) {
                 to_log = {
-		    'logtype': 'data',		    
+                    'logtype': 'data',
                     'sample_key': sample_key,
                     'timestamp0': timestamp,
                     'timestamp': timestamp_interp,
