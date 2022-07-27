@@ -2,8 +2,9 @@ const Max = require('max-api');
 const nj = require('numjs');
 var Fili = require('fili');
 var fs = require('fs');
-
 var Linear = require('everpolate').linear
+var probable = require('probable');
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // TIME INTERPOLATION
@@ -139,6 +140,8 @@ class Debug {
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+// LOGFILE WRITER
 class Logger {
 
     logger = undefined;
@@ -160,12 +163,46 @@ class Logger {
     }
 }
 
+///
+class PDF {
+
+    ptable = undefined;
+
+    // construct from histogram counts in equally-spaced bins within range
+    constructor(array, bounds) {
+	var n = array.length;
+	var table = new Array();
+	var sum = 0;
+	
+	// create cumsum of hist freqs, mapped to bin center 
+	for (var i = 0; i < n; i++) {
+	    var freq = array[i];
+	    if (freq > 0)
+		table.push([[sum, sum + freq - 1], (i + 0.5) / n  * (bounds[1] - bounds[0]) + bounds[0] ]);
+	    sum += freq;
+	}
+	this.ptable = probable.createRangeTable(table);
+	
+/* example: 
+        this.ptable = probable.createRangeTable([ [[0,  24], 0],
+						  [[25, 49], 1],
+						  [[50, 74], 2],
+						  [[75, 99], 3],
+						]);
+*/
+    }
+
+    draw() { return this.ptable.roll(); }
+}
+
+
 
 module.exports = {
     Lowpass,
     Unwrap,
     TimeInterpolation,
     Debug,
-    Logger
+    Logger,
+    PDF
 }
 

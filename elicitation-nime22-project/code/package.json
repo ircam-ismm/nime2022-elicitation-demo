@@ -6,6 +6,7 @@
     "fili": "^2.0.3",
     "ml-savitzky-golay": "^5.0.0",
     "numjs": "^0.16.1",
-    "poolifier": "^2.2.0"
+    "poolifier": "^2.2.0",
+    "probable": "^2.1.4"
   }
 }

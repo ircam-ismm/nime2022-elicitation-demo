@@ -17,11 +17,20 @@ var LOGGING_DATA = 2; // 1: output to max, 2: write to log file
 var to_log = {};
 var logger = LOGGING_DATA == 2  ?  new utils.Logger()  :  undefined;
 
+var novelty_feedback = 1; // 1: normal, 2: random
+
+Max.addHandler('novelty_feedback', async (index) => {
+    novelty_feedback = index;
+    Max.post('switch feedback to ', index);
+});
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // DTW callback
 // https://math.stackexchange.com/questions/106700/incremental-averaging
 var avg_dtw = 0;
 var n_dtw = 1;
+var pdf = new utils.PDF([10, 2, 3, 6, 6, 6, 1], [0.1, 2]);
 
 dtw_worker.addListener(async function(res) {
 
@@ -32,6 +41,9 @@ dtw_worker.addListener(async function(res) {
     res['dtw']     = min_dtw / avg_dtw;
     res['logtype'] = 'segment';
 
+    var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
+    res['random_novelty'] = rnd;
+    
     if (LOGGING_DATA == 1) {
         var out = await Max.outlet('logging_dtw', JSON.stringify(res));
     }
@@ -39,7 +51,8 @@ dtw_worker.addListener(async function(res) {
         logger.log(res);
     }
 
-    var out = await Max.outlet('dtw', min_dtw);
+    // send out min_dtw as novelty value
+    var out = await Max.outlet('dtw', novelty_feedback <= 1  ?  min_dtw  :  rnd);
     Max.post('cb', (min_dtw/avg_dtw).toFixed(2), min_dtw.toFixed(2), avg_dtw.toFixed(2));
 });
 
@@ -271,7 +284,7 @@ function new_segment(cur_segment_len) {
     if (features.length > 10) {
         var avg = average(speed);
         if (avg > 0.01) {
-            var startTime = performance.now();
+            var startTime = performance.now(); // current high resolution millisecond timestamp after start of the node process
             dtw_worker.processDtw({'msg':'test', 'now': startTime, 'segment_id':segment_id, 'features': features});
         }
     }
