@@ -25,6 +25,9 @@ Max.addHandler('novelty_feedback', async (index) => {
 });
 
 
+var send_max_dtw_flag = false;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // DTW callback
 // https://math.stackexchange.com/questions/106700/incremental-averaging
@@ -56,6 +59,7 @@ dtw_worker.addListener(async function(res) {
     // store dtw per segment as they arrive
     segment_dtws.push(min_dtw);
     Max.post('segment_dtws: ', segment_dtws);
+    send_max_dtw();
 
     // send out min_dtw as novelty value
     var out = await Max.outlet('dtw', novelty_feedback <= 1  ?  min_dtw  :  rnd);
@@ -123,6 +127,20 @@ Max.addHandler('log_event', async (...values) => {
     }
 });
 
+
+async function send_max_dtw() {
+
+    if (send_max_dtw_flag) {
+        // else send feedback for the stroke
+        var max_segment_dtws = Math.max(...segment_dtws);
+        Max.post('max_segment_dtws: ', max_segment_dtws);
+        var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
+        var out = await Max.outlet('dtw_max', novelty_feedback <= 1  ?  max_segment_dtws  :  rnd);
+    }
+    send_max_dtw_flag = false;
+}
+
+
 Max.addHandler('new_sample', async (...sample) => {
     // Expected format is
     // sample: t, stroke_id, touch, finger_id, _, x, y, p
@@ -132,7 +150,10 @@ Max.addHandler('new_sample', async (...sample) => {
     var touching = parseInt(sample[2]);
     var finger = parseInt(sample[3]);
     var xyp = sample.slice(-3);
-    
+
+    Max.post("input: ", stroke_id, touching);
+
+
     // we support only touch from finger 1
     if (finger == 1) {
 
@@ -145,24 +166,26 @@ Max.addHandler('new_sample', async (...sample) => {
             fp_timestamp = timestamp;
             fp_values = xyp;
         }
-        if (!touching) { // last point
+
+        if (!touching && first_point_state) {
+            return 0
+        }
+
+        if (!touching && !first_point_state) { // last point
             Max.post('LAST POINT');
+            send_max_dtw_flag = true;
 
             // send the last recorded data as a new segment
             if (cur_segment_len > 10) {
                 new_segment(cur_segment_len);
             }
-
-            // else send feedback for the stroke
-            var max_segment_dtws = Math.max(...segment_dtws);
-            Max.post('max_segment_dtws: ', max_segment_dtws);
-
-	    var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
-
-            var out = await Max.outlet('dtw_max', novelty_feedback <= 1  ?  max_segment_dtws  :  rnd);
-            // segment_dtws = [];
+            else {
+                send_max_dtw();
+            }
 
             if (LOGGING_DATA > 0) {
+                var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
+                var max_segment_dtws = Math.max(...segment_dtws);
                 to_log = {
                     'logtype': 'feedback',
                     'timestamp0': timestamp,
@@ -170,8 +193,8 @@ Max.addHandler('new_sample', async (...sample) => {
                     'segment_id': segment_id,
                     'input': current_input,
                     'audio': current_feedback,
-		    'random_novelty': rnd,
-		    'dtw_max': max_segment_dtws,
+                    'random_novelty': rnd,
+                    'dtw_max': max_segment_dtws,
                 }
 
                 if (LOGGING_DATA == 1) {
@@ -181,8 +204,8 @@ Max.addHandler('new_sample', async (...sample) => {
                     logger.log(to_log);
                 }
                 to_log = {};
-	    }
-	    
+                }
+
             // reinit global variables
             first_point_state = true;
 
@@ -328,6 +351,12 @@ function new_segment(cur_segment_len) {
             var startTime = performance.now(); // current high resolution millisecond timestamp after start of the node process
             dtw_worker.processDtw({'msg':'test', 'now': startTime, 'segment_id':segment_id, 'features': features});
         }
+        else {
+            send_max_dtw();
+        }
+    }
+    else {
+        send_max_dtw();
     }
     segment_id += 1;
 }
