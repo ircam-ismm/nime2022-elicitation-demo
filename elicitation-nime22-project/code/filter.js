@@ -32,6 +32,8 @@ var avg_dtw = 0;
 var n_dtw = 1;
 var pdf = new utils.PDF([10, 2, 3, 6, 6, 6, 1], [0.1, 2]);
 
+segment_dtws = [];
+
 dtw_worker.addListener(async function(res) {
 
     var min_dtw = res['min_dtw_pond'];
@@ -50,6 +52,10 @@ dtw_worker.addListener(async function(res) {
     else if (LOGGING_DATA == 2) {
         logger.log(res);
     }
+
+    // store dtw per segment as they arrive
+    segment_dtws.push(min_dtw);
+    Max.post('segment_dtws: ', segment_dtws);
 
     // send out min_dtw as novelty value
     var out = await Max.outlet('dtw', novelty_feedback <= 1  ?  min_dtw  :  rnd);
@@ -104,6 +110,7 @@ Max.addHandler('current_feedback', async (...values) => {
 });
 
 
+
 // log events: timetag, symbols...
 Max.addHandler('log_event', async (...values) => {
     res = { 'logtype': 'event', 'timestamp0': parseInt(values[0]), 'event': values.slice(1) };
@@ -132,15 +139,26 @@ Max.addHandler('new_sample', async (...sample) => {
         // stroke segmentation
         if (touching && first_point_state) { // first point
             Max.post('FIRST POINT');
+            segment_dtws = [];
+
             first_point_state = false;
             fp_timestamp = timestamp;
             fp_values = xyp;
         }
         if (!touching) { // last point
             Max.post('LAST POINT');
+
+            // send the last recorded data as a new segment
             if (cur_segment_len > 10) {
-                new_segment(cur_segment_len); // send the last recorded data as a new segment
+                new_segment(cur_segment_len);
             }
+
+            // else send feedback for the stroke
+            var max_segment_dtws = Math.max(...segment_dtws);
+            Max.post('max_segment_dtws: ', max_segment_dtws);
+            var out = await Max.outlet('dtw_max', novelty_feedback <= 1  ?  max_segment_dtws  :  rnd);
+            // segment_dtws = [];
+
             // reinit global variables
             first_point_state = true;
 
@@ -154,7 +172,6 @@ Max.addHandler('new_sample', async (...sample) => {
 
             unwrap.reset();
             lowpass.reset();
-            // var res = await Max.outlet('reset_sg');
             return 0
         }
 
