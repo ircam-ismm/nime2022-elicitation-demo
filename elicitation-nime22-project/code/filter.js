@@ -33,8 +33,11 @@ var send_max_dtw_flag = false;
 // https://math.stackexchange.com/questions/106700/incremental-averaging
 var avg_dtw = 0;
 var n_dtw = 1;
-var pdf = new utils.PDF([10, 2, 3, 6, 6, 6, 1], [0.1, 2]);
-
+var pdf = new utils.PDF([ 6.,  9., 12., 16., 12., 12.,  4.,  8.,  7., 10.,  5.,  5.,  8.,
+			  3.,  6.,  3.,  4.,  2.,  0.,  2.,  4.,  1.,  0.,  0.,  0.,  0.,
+			  0.,  0.,  1.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,
+			  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.],
+			[ 0.25, 3.35 ]);
 segment_dtws = [];
 
 dtw_worker.addListener(async function(res) {
