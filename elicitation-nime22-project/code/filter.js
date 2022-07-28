@@ -132,7 +132,7 @@ Max.addHandler('new_sample', async (...sample) => {
     var touching = parseInt(sample[2]);
     var finger = parseInt(sample[3]);
     var xyp = sample.slice(-3);
-
+    
     // we support only touch from finger 1
     if (finger == 1) {
 
@@ -156,9 +156,33 @@ Max.addHandler('new_sample', async (...sample) => {
             // else send feedback for the stroke
             var max_segment_dtws = Math.max(...segment_dtws);
             Max.post('max_segment_dtws: ', max_segment_dtws);
+
+	    var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
+
             var out = await Max.outlet('dtw_max', novelty_feedback <= 1  ?  max_segment_dtws  :  rnd);
             // segment_dtws = [];
 
+            if (LOGGING_DATA > 0) {
+                to_log = {
+                    'logtype': 'feedback',
+                    'timestamp0': timestamp,
+                    'stroke_id': stroke_id,
+                    'segment_id': segment_id,
+                    'input': current_input,
+                    'audio': current_feedback,
+		    'random_novelty': rnd,
+		    'dtw_max': max_segment_dtws,
+                }
+
+                if (LOGGING_DATA == 1) {
+                    var res = await Max.outlet('logging_data', JSON.stringify(to_log));
+                }
+                else if (LOGGING_DATA == 2) {
+                    logger.log(to_log);
+                }
+                to_log = {};
+	    }
+	    
             // reinit global variables
             first_point_state = true;
 
