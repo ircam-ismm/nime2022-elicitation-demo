@@ -3,3 +3,6 @@ __pycache__*
 *ipynb_checkpoints*
 file_system_store
 
+elicitation-nime22-project/code/node_modules/probable
+elicitation-nime22-project/externals/nn~.mxo
+engine.ts
