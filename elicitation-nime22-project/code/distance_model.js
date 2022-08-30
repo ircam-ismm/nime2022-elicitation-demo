@@ -72,7 +72,7 @@ class DtwCompute {
             }
         }
 
-        return [min_key, min_dist, min_dist_pond]
+        return [min_key, min_dist, min_dist_pond, this.model.length]
     }
 }
 
@@ -129,6 +129,7 @@ if (cluster.isPrimary) {
         res['best_id'] = dtwResult[0];
         res['min_dtw'] = dtwResult[1];
         res['min_dtw_pond'] = dtwResult[2];
+        res['model_length'] = dtwResult[3];
 
         res['worker_1'] = performance.now();
 
