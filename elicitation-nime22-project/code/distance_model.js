@@ -72,7 +72,7 @@ class DtwCompute {
             }
         }
 
-        return [min_key, min_dist, min_dist_pond, this.model.length]
+        return [min_key, min_dist, min_dist_pond, n_models]
     }
 }
 
