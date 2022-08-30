@@ -126,11 +126,18 @@ def r_add_new_file(register):
 ################################################################################
 # UTILS
 def parse_contents(contents, filename):
+    print('parse_contents')
+    # print(contents, filename)
+
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
+
+    print(decoded)
+
     try:
-        df = pd.read_json(io.StringIO(decoded.decode('utf-8')), lines=True)
+        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         # df.columns = [0, 'source', 'data']
+        print('df: ', df)
     except Exception as e:
         print(e)
         error_msg = """There was an error processing this file. Use pandas dataframes
@@ -140,6 +147,8 @@ def parse_contents(contents, filename):
     print('parse_contents ', df)
     data_df = format_from_df(df, source='/data')
     props = parse_data_properties(data_df)
+
+
 
     return data_df, props
 
