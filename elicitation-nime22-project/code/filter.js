@@ -154,7 +154,7 @@ Max.addHandler('new_sample', async (...sample) => {
     var finger = parseInt(sample[3]);
     var xyp = sample.slice(-3);
 
-    Max.post("input: ", stroke_id, touching);
+    //Max.post("input: ", stroke_id, touching);
 
 
     // we support only touch from finger 1
