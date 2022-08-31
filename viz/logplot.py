@@ -6,11 +6,13 @@ import pandas as pd
 df = pd.read_json(logfilename, lines=True)
 print (df)
 
-# split into 3 dataframes by type of line 
+# split into the 4 dataframes by type of line 
 datind = df['logtype'] == 'data'
 segind = df['logtype'] == 'segment'
 evtind = df['logtype'] == 'event'
+fbind  = df['logtype'] == 'feedback'
 
 data     = df[datind].dropna(axis=1)
 segments = df[segind].dropna(axis=1)
 events   = df[evtind].dropna(axis=1)
+fb       = df[fbind]   #.dropna(axis=1)
