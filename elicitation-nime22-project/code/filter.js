@@ -42,11 +42,8 @@ segment_dtws = [];
 
 dtw_worker.addListener(async function(res) {
 
-    var min_dtw = res['min_dtw_pond'];
-    avg_dtw = avg_dtw + (min_dtw - avg_dtw) / n_dtw;
-    n_dtw += 1;
-    res['avg_dtw'] = avg_dtw;
-    res['dtw']     = min_dtw / avg_dtw;
+    var min_dtw = res['min_dtw'];
+    var threshold = res['threshold'];
     res['logtype'] = 'segment';
 
     var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
@@ -60,16 +57,28 @@ dtw_worker.addListener(async function(res) {
     }
 
     // store dtw per segment as they arrive
-    segment_dtws.push(min_dtw);
-    Max.post('segment_dtws: ', segment_dtws);
+    segment_dtws.push(min_dtw/threshold);
+    // Max.post('segment_dtws: ', segment_dtws);
     send_max_dtw();
 
     // send out min_dtw as novelty value
-    var out = await Max.outlet('dtw', novelty_feedback <= 1  ?  min_dtw  :  rnd);
-    Max.post('cb', (min_dtw/avg_dtw).toFixed(2), min_dtw.toFixed(2), avg_dtw.toFixed(2));
+    var out = await Max.outlet('dtw', novelty_feedback <= 1  ?  min_dtw/threshold  :  rnd);
+    // Max.post('cb', (min_dtw/avg_dtw).toFixed(2), min_dtw.toFixed(2), avg_dtw.toFixed(2));
+    Max.post("DTW CB!!!", min_dtw, threshold);
 });
 
 
+async function send_max_dtw() {
+
+    if (send_max_dtw_flag) {
+        // else send feedback for the stroke
+        var max_segment_dtws = Math.max(...segment_dtws);
+        Max.post('max_segment_dtws: ', max_segment_dtws);
+        var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
+        var out = await Max.outlet('dtw_max', novelty_feedback <= 1  ?  max_segment_dtws  :  rnd);
+    }
+    send_max_dtw_flag = false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // filter from incoming data source and send to pipo savgol
@@ -112,10 +121,9 @@ Max.addHandler('current_input', async (...index) => {
 
 // dsp on, novelty on, synth on, novelty dB, synth dB
 Max.addHandler('current_feedback', async (...values) => {
-    Max.post("UPDATE FEEDBACK CONDITION");
+    Max.post('UPDATE FEEDBACK CONDITION');
     current_feedback = [ ...values ];
 });
-
 
 
 // log events: timetag, symbols...
@@ -131,19 +139,6 @@ Max.addHandler('log_event', async (...values) => {
 });
 
 
-async function send_max_dtw() {
-
-    if (send_max_dtw_flag) {
-        // else send feedback for the stroke
-        var max_segment_dtws = Math.max(...segment_dtws);
-        Max.post('max_segment_dtws: ', max_segment_dtws);
-        var rnd = novelty_feedback > 1  ?  pdf.draw()  :  -99;
-        var out = await Max.outlet('dtw_max', novelty_feedback <= 1  ?  max_segment_dtws  :  rnd);
-    }
-    send_max_dtw_flag = false;
-}
-
-
 Max.addHandler('new_sample', async (...sample) => {
     // Expected format is
     // sample: t, stroke_id, touch, finger_id, _, x, y, p
@@ -153,9 +148,6 @@ Max.addHandler('new_sample', async (...sample) => {
     var touching = parseInt(sample[2]);
     var finger = parseInt(sample[3]);
     var xyp = sample.slice(-3);
-
-    //Max.post("input: ", stroke_id, touching);
-
 
     // we support only touch from finger 1
     if (finger == 1) {
@@ -282,7 +274,7 @@ Max.addHandler('new_sample', async (...sample) => {
                 // local minimum
                 if ((last_3[0] > last_3[1]) && (last_3[2] > last_3[1])) {
 
-                    if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 10)) || (cur_segment_len > 120)) {
+                    if (((last_3[1] < SPEED_THRESHOLD) && (cur_segment_len > 30)) || (cur_segment_len > 80)) {
                         Max.post('SEGMENT:', segment_id, stroke.length);
                         new_segment(cur_segment_len);
                         last_segment_end = cur_segment_len;

@@ -17,64 +17,92 @@ var DTW_THRESHOLD = 5;
 class DtwCompute {
 
     models = {};
-    keys_map = {};
+    threshold = 0;
+    min_dtws = [];
 
+    // Computes the minimum DTW distance of A against all previously recorded
+    // identified segments.
+    // Inputs:
+    //   A: a multidimensional equispaced time series.
+    // Returns:
+    //   The minimum DTW distance.
     compute_distance(segment_id, A) {
-        // Computes the minimum DTW distance of A against all previously recorded
-        // identified segments.
-        // Inputs:
-        //   A: a multidimensional equispaced time series.
-        // Returns:
-        //   The minimum DTW distance.
 
-        var min_key = 0;
-        var min_dist = 0;
-        var min_dist_pond = 0;
-
+        // if no models yet, store
         var n_models = Object.keys(this.models).length;
-        // if no models yet, store series and return
-        if (n_models == 0) {
+        if (n_models < 5) {
             this.models[segment_id] = [A];
         }
-        // else loop over all models and find closest
+
+        var res = this.find_closest(segment_id, A);
+        var min_key = res[0];
+        var min_dtw = res[1];
+        // console.log("find closest", min_key, min_dtw);
+        this.min_dtws.push(min_dtw);
+        this.update_threshold();
+
+        if (min_dtw < this.threshold) {
+
+            this.same_segment(segment_id, A, min_key);
+        }
         else {
-
-            for (var key in this.models) {
-
-                var B = this.models[key];
-                // select one series among the group
-                var C = B[Math.floor(Math.random() * B.length)];
-
-                var dtw = new DTW(A, C, distance_fun);
-                var cur_dist = dtw.getDistance();
-
-                var cur_dist_pond = 2*cur_dist / (A.length + C.length);
-
-                if (min_dist == 0) {
-                    min_dist = cur_dist;
-                    min_dist_pond = cur_dist_pond;
-                }
-                if (cur_dist < min_dist) {
-                    min_key = key;
-                    min_dist = cur_dist;
-                    min_dist_pond = cur_dist_pond;
-                }
-            }
-
-            // store model only if min distance under threshold
-            if (min_dist < DTW_THRESHOLD) {
-                min_key = parseInt(min_key);
-                this.models[min_key].push(A);
-            }
-            else {
-                min_key = segment_id;
-                this.models[segment_id] = [A];
-            }
+            this.novel_segment(segment_id, A);
         }
 
-        return [min_key, min_dist, min_dist_pond, n_models]
+        return [min_key, min_dtw, this.threshold, n_models]
     }
+
+    same_segment(segment_id, A, min_key) {
+        // console.log("same segment", segment_id, min_key);
+        // Max.post("same segment", segment_id, min_key);
+        min_key = parseInt(min_key);
+        this.models[min_key].push(A);
+    }
+    novel_segment(segment_id, A) {
+        var min_key = segment_id;
+        this.models[segment_id] = [A];
+    }
+
+    update_threshold() {
+        var m = average(this.min_dtws);
+        var s = standardDeviation(this.min_dtws);
+        this.threshold = m + s;
+    }
+
+    find_closest(segment_id, A) {
+        var min_key = 0;
+        var min_dtw = 0;
+
+        for (var key in this.models) {
+
+            var B = this.models[key];
+            // select one series among the group
+            var C = B[Math.floor(Math.random() * B.length)];
+
+            var dtw = new DTW(A, C, distance_fun);
+            var cur_dist = dtw.getDistance();
+            var cur_dist = cur_dist / (A.length + C.length);
+
+            if ((min_dtw == 0) || (cur_dist < min_dtw)) {
+                min_key = key;
+                min_dtw = cur_dist;
+            }
+        }
+        return [min_key, min_dtw]
+    }
+
+
 }
+
+const average = arr => arr.reduce((a,b) => a + b, 0) / arr.length;
+
+const standardDeviation = (arr, usePopulation = false) => {
+  const mean = arr.reduce((acc, val) => acc + val, 0) / arr.length;
+  return Math.sqrt(
+    arr.reduce((acc, val) => acc.concat((val - mean) ** 2), []).reduce((acc, val) => acc + val, 0) /
+      (arr.length - (usePopulation ? 0 : 1))
+  );
+};
 
 
 function distance_fun(a, b) {
@@ -126,10 +154,10 @@ if (cluster.isPrimary) {
         res['worker_0'] = performance.now();
 
         const dtwResult = dtwCompute.compute_distance(segment_id, features);
-        res['best_id'] = dtwResult[0];
+        res['min_key'] = dtwResult[0];
         res['min_dtw'] = dtwResult[1];
-        res['min_dtw_pond'] = dtwResult[2];
-        res['model_length'] = dtwResult[3];
+        res['threshold'] = dtwResult[2];
+        res['length'] = dtwResult[3];
 
         res['worker_1'] = performance.now();
 
