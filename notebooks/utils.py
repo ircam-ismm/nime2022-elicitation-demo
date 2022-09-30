@@ -1,3 +1,10 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
+from tqdm import tqdm
+
 ################################################################################
 # pandas select
 from functools import reduce
@@ -49,7 +56,7 @@ def read_log(logfile):
                 if line['event'] == ['Familiarization']:
                     event = 'c0'
                 
-                print(i, line)
+                # print(i, line)
 
             if line['logtype'] == 'segment':
                 line['condition'] = event
