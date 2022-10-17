@@ -49,13 +49,14 @@ def read_log(logfile):
             line = eval(line.replace('null', 'False'))
 
             if line['logtype'] == 'event':
-                if line['event'] == ['Start Condition 1']:
+                
+                if line['event'][0][:17] == 'Start Condition 1':
                     event = 'c1'
-                if line['event'] == ['Start Condition 2']:
+                if line['event'][0][:17] == 'Start Condition 2':
                     event = 'c2'
                 if line['event'] == ['Familiarization']:
                     event = 'c0'
-                
+
                 # print(i, line)
 
             if line['logtype'] == 'segment':
