@@ -44,26 +44,27 @@ def read_log(logfile):
     segment = []
     event = 'False'
 
-    with open(logfile) as f:
-        for i, line in enumerate(f):
-            line = eval(line.replace('null', 'False'))
+    if not os.path.isdir(logfile):
+        with open(logfile) as f:
+            for i, line in enumerate(f):
+                line = eval(line.replace('null', 'False'))
 
-            if line['logtype'] == 'event':
-                
-                if line['event'][0][:17] == 'Start Condition 1':
-                    event = 'c1'
-                if line['event'][0][:17] == 'Start Condition 2':
-                    event = 'c2'
-                if line['event'] == ['Familiarization']:
-                    event = 'c0'
+                if line['logtype'] == 'event':
 
-                # print(i, line)
+                    if line['event'][0][:17] == 'Start Condition 1':
+                        event = 'c1'
+                    if line['event'][0][:17] == 'Start Condition 2':
+                        event = 'c2'
+                    if line['event'] == ['Familiarization']:
+                        event = 'c0'
 
-            if line['logtype'] == 'segment':
-                line['condition'] = event
-                segment.append(line)
-            if line['logtype'] == 'data':
-                line['condition'] = event
-                data.append(line)
+                    # print(i, line)
+
+                if line['logtype'] == 'segment':
+                    line['condition'] = event
+                    segment.append(line)
+                if line['logtype'] == 'data':
+                    line['condition'] = event
+                    data.append(line)
 
     return data, segment
