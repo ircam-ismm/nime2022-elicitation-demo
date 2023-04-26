@@ -29,3 +29,9 @@ To use the live visualisation:
 4. launch the visualisation program with `python viz/app.py`
 5. open http://localhost:8050 in a browser
 6. drag and drop the csv file into the box
+
+### Data Analysis
+
+1. go to dir `notebooks`, start jupyter-lab
+2. run `create_dataset` to compile `user_data` into `pilot_0.csv`, `pilot_1.csv`
+2. then run `pilot_data` to analyse data and produce plots
